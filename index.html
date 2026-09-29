@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock Intelligence Platform — Spec-Driven Development</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+  --code-bg: #f6f8fa; --accent: #0969da; --sidebar-bg: #f6f8fa; --quote: #0969da;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #30363d;
+    --code-bg: #161b22; --accent: #4493f8; --sidebar-bg: #010409; --quote: #4493f8;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+nav.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 300px; overflow-y: auto;
+  padding: 24px 16px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+  font-size: 14px;
+}
+nav.sidebar h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+nav.sidebar ul { list-style: none; padding-left: 0; margin: 0; }
+nav.sidebar ul ul { padding-left: 14px; }
+nav.sidebar li { margin: 2px 0; }
+nav.sidebar a { color: var(--fg); text-decoration: none; display: block; padding: 2px 6px; border-radius: 4px; }
+nav.sidebar a:hover { background: var(--border); }
+main { margin-left: 300px; padding: 40px 56px 80px; max-width: 1100px; }
+@media (max-width: 900px) {
+  nav.sidebar { display: none; }
+  main { margin-left: 0; padding: 24px 20px; }
+}
+h1, h2, h3, h4 { line-height: 1.25; margin: 1.6em 0 .6em; }
+h1 { font-size: 2.2em; border-bottom: 1px solid var(--border); padding-bottom: .3em; margin-top: 0; }
+h2 { font-size: 1.6em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
+h3 { font-size: 1.25em; }
+a { color: var(--accent); }
+.headerlink { opacity: 0; margin-left: 6px; text-decoration: none; font-weight: normal; }
+h1:hover .headerlink, h2:hover .headerlink, h3:hover .headerlink { opacity: .6; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
+blockquote {
+  margin: 1em 0; padding: .6em 1em; border-left: 4px solid var(--quote);
+  background: var(--code-bg); border-radius: 0 6px 6px 0; color: var(--fg);
+}
+blockquote p { margin: 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em;
+  background: var(--code-bg); padding: .15em .4em; border-radius: 4px;
+}
+pre, .code pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 14px 16px; overflow-x: auto; line-height: 1.45;
+}
+pre code { background: none; padding: 0; font-size: .85em; }
+.code { margin: 1em 0; }
+.code pre { margin: 0; font-size: .85em; }
+.code .k, .code .kd, .code .kt { color: #cf222e; }
+.code .s, .code .s2, .code .s1 { color: #0a3069; }
+.code .nf, .code .nx { color: #8250df; }
+.code .mi, .code .mf, .code .kc { color: #0550ae; }
+.code .nt { color: #116329; }
+.code .c, .code .c1, .code .cm { color: #6e7781; font-style: italic; }
+@media (prefers-color-scheme: dark) {
+  .code .k, .code .kd, .code .kt { color: #ff7b72; }
+  .code .s, .code .s2, .code .s1 { color: #a5d6ff; }
+  .code .nf, .code .nx { color: #d2a8ff; }
+  .code .mi, .code .mf, .code .kc { color: #79c0ff; }
+  .code .nt { color: #7ee787; }
+  .code .c, .code .c1, .code .cm { color: #8b949e; }
+}
+.table-wrap { overflow-x: auto; margin: 1em 0; }
+table { border-collapse: collapse; width: 100%; font-size: .92em; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--code-bg); font-weight: 600; }
+tr:nth-child(even) td { background: color-mix(in srgb, var(--code-bg) 50%, transparent); }
+li.task { list-style: none; margin-left: -1.3em; }
+li.task input { margin-right: 6px; }
+.diagram {
+  margin: 1.2em 0; padding: 16px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); overflow-x: auto; text-align: center;
+}
+.diagram pre.mermaid { background: none; border: 0; padding: 0; margin: 0; }
+@media print {
+  nav.sidebar { display: none; }
+  main { margin: 0; max-width: none; padding: 0; }
+  pre, .diagram, table { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+<h2>Contents</h2>
+<div class="toc">
+<ul>
+<li><a href="#spec-driven-development-product-domain-and-software-architecture-specification">Spec-Driven Development — Product, Domain and Software Architecture Specification</a></li>
+<li><a href="#0-how-to-use-this-document">0. How to Use This Document</a></li>
+<li><a href="#1-project-context">1. Project Context</a><ul>
+<li><a href="#11-product-owner-and-developer-context">1.1 Product owner and developer context</a></li>
+<li><a href="#12-product-vision">1.2 Product vision</a></li>
+<li><a href="#13-core-outcome">1.3 Core outcome</a></li>
+<li><a href="#14-initial-use-cases">1.4 Initial use cases</a></li>
+</ul>
+</li>
+<li><a href="#2-product-principles">2. Product Principles</a><ul>
+<li><a href="#p-001-evidence-before-narrative">P-001 — Evidence before narrative</a></li>
+<li><a href="#p-002-deterministic-numbers">P-002 — Deterministic numbers</a></li>
+<li><a href="#p-003-fact-and-interpretation-are-different-records">P-003 — Fact and interpretation are different records</a></li>
+<li><a href="#p-004-domain-ownership">P-004 — Domain ownership</a></li>
+<li><a href="#p-005-material-alerts">P-005 — Material alerts</a></li>
+<li><a href="#p-006-auditability">P-006 — Auditability</a></li>
+<li><a href="#p-007-replaceable-infrastructure">P-007 — Replaceable infrastructure</a></li>
+</ul>
+</li>
+<li><a href="#3-scope">3. Scope</a><ul>
+<li><a href="#31-mvp-scope">3.1 MVP scope</a></li>
+<li><a href="#32-post-mvp-scope">3.2 Post-MVP scope</a></li>
+<li><a href="#33-explicit-non-goals-for-mvp">3.3 Explicit non-goals for MVP</a></li>
+</ul>
+</li>
+<li><a href="#4-system-context">4. System Context</a></li>
+<li><a href="#5-architecture-decisions">5. Architecture Decisions</a><ul>
+<li><a href="#51-selected-architecture">5.1 Selected architecture</a></li>
+<li><a href="#52-why-this-architecture">5.2 Why this architecture</a></li>
+<li><a href="#53-architecture-constraints">5.3 Architecture constraints</a></li>
+</ul>
+</li>
+<li><a href="#6-microservice-boundaries">6. Microservice Boundaries</a><ul>
+<li><a href="#61-services-intentionally-not-created">6.1 Services intentionally not created</a></li>
+</ul>
+</li>
+<li><a href="#7-service-communication">7. Service Communication</a><ul>
+<li><a href="#71-synchronous-communication">7.1 Synchronous communication</a></li>
+<li><a href="#72-asynchronous-communication">7.2 Asynchronous communication</a></li>
+<li><a href="#73-event-envelope">7.3 Event envelope</a></li>
+<li><a href="#74-initial-event-catalogue">7.4 Initial event catalogue</a></li>
+<li><a href="#75-messaging-requirements">7.5 Messaging requirements</a></li>
+</ul>
+</li>
+<li><a href="#8-data-ownership-and-storage">8. Data Ownership and Storage</a><ul>
+<li><a href="#81-storage-choices">8.1 Storage choices</a></li>
+<li><a href="#82-database-ownership">8.2 Database ownership</a></li>
+<li><a href="#83-financial-precision">8.3 Financial precision</a></li>
+</ul>
+</li>
+<li><a href="#9-core-domain-model">9. Core Domain Model</a><ul>
+<li><a href="#91-company-master">9.1 Company master</a></li>
+<li><a href="#92-source-and-evidence">9.2 Source and evidence</a></li>
+<li><a href="#93-financial-fact">9.3 Financial fact</a></li>
+<li><a href="#94-metric-calculation">9.4 Metric calculation</a></li>
+<li><a href="#95-investment-thesis">9.5 Investment thesis</a></li>
+<li><a href="#96-analysis-claim">9.6 Analysis claim</a></li>
+</ul>
+</li>
+<li><a href="#10-financial-calculation-rules">10. Financial Calculation Rules</a><ul>
+<li><a href="#101-initial-metrics">10.1 Initial metrics</a></li>
+<li><a href="#102-calculation-requirements">10.2 Calculation requirements</a></li>
+<li><a href="#103-restatements">10.3 Restatements</a></li>
+</ul>
+</li>
+<li><a href="#11-ai-analyst-specification">11. AI Analyst Specification</a><ul>
+<li><a href="#111-allowed-responsibilities">11.1 Allowed responsibilities</a></li>
+<li><a href="#112-prohibited-responsibilities">11.2 Prohibited responsibilities</a></li>
+<li><a href="#113-accuracy-first-checks">11.3 Accuracy-first checks</a></li>
+<li><a href="#114-ai-output-contract">11.4 AI output contract</a></li>
+</ul>
+</li>
+<li><a href="#12-internal-architecture-of-each-go-service">12. Internal Architecture of Each Go Service</a><ul>
+<li><a href="#121-selected-pattern">12.1 Selected pattern</a></li>
+<li><a href="#122-dependency-direction">12.2 Dependency direction</a></li>
+<li><a href="#123-clean-code-clean-architecture-and-ports-adapters">12.3 Clean Code, Clean Architecture, and Ports &amp; Adapters</a></li>
+<li><a href="#124-example-service-structure">12.4 Example service structure</a></li>
+<li><a href="#125-go-coding-rules">12.5 Go coding rules</a></li>
+</ul>
+</li>
+<li><a href="#13-repository-structure">13. Repository Structure</a><ul>
+<li><a href="#131-module-policy">13.1 Module policy</a></li>
+</ul>
+</li>
+<li><a href="#14-initial-http-api-surface">14. Initial HTTP API Surface</a><ul>
+<li><a href="#141-company-and-watchlist">14.1 Company and watchlist</a></li>
+<li><a href="#142-documents-and-evidence">14.2 Documents and evidence</a></li>
+<li><a href="#143-financials-and-valuation">14.3 Financials and valuation</a></li>
+<li><a href="#144-thesis-and-alerts">14.4 Thesis and alerts</a></li>
+<li><a href="#145-api-conventions">14.5 API conventions</a></li>
+</ul>
+</li>
+<li><a href="#15-source-collection-pipeline">15. Source Collection Pipeline</a><ul>
+<li><a href="#151-processing-stages">15.1 Processing stages</a></li>
+<li><a href="#152-source-adapter-contract">15.2 Source adapter contract</a></li>
+<li><a href="#153-collection-requirements">15.3 Collection requirements</a></li>
+</ul>
+</li>
+<li><a href="#16-thesis-impact-engine">16. Thesis Impact Engine</a><ul>
+<li><a href="#161-trigger-types">16.1 Trigger types</a></li>
+<li><a href="#162-materiality">16.2 Materiality</a></li>
+</ul>
+</li>
+<li><a href="#17-alert-contract">17. Alert Contract</a></li>
+<li><a href="#18-security-and-privacy">18. Security and Privacy</a></li>
+<li><a href="#19-reliability-and-non-functional-requirements">19. Reliability and Non-Functional Requirements</a><ul>
+<li><a href="#191-initial-service-objectives">19.1 Initial service objectives</a></li>
+<li><a href="#192-resilience">19.2 Resilience</a></li>
+</ul>
+</li>
+<li><a href="#20-observability">20. Observability</a><ul>
+<li><a href="#201-required-signals">20.1 Required signals</a></li>
+<li><a href="#202-required-identifiers">20.2 Required identifiers</a></li>
+<li><a href="#203-core-operational-metrics">20.3 Core operational metrics</a></li>
+</ul>
+</li>
+<li><a href="#21-testing-strategy">21. Testing Strategy</a><ul>
+<li><a href="#211-domain-unit-tests">21.1 Domain unit tests</a></li>
+<li><a href="#212-adapter-integration-tests">21.2 Adapter integration tests</a></li>
+<li><a href="#213-contract-tests">21.3 Contract tests</a></li>
+<li><a href="#214-end-to-end-golden-path">21.4 End-to-end golden path</a></li>
+<li><a href="#215-ai-evaluation">21.5 AI evaluation</a></li>
+</ul>
+</li>
+<li><a href="#22-deployment-model">22. Deployment Model</a><ul>
+<li><a href="#221-local-development">22.1 Local development</a></li>
+<li><a href="#222-production-evolution">22.2 Production evolution</a></li>
+<li><a href="#223-cicd">22.3 CI/CD</a></li>
+</ul>
+</li>
+<li><a href="#23-spec-driven-development-workflow">23. Spec-Driven Development Workflow</a><ul>
+<li><a href="#231-required-artifacts">23.1 Required artifacts</a></li>
+<li><a href="#232-change-procedure">23.2 Change procedure</a></li>
+<li><a href="#233-requirement-template">23.3 Requirement template</a></li>
+<li><a href="#234-architecture-decision-record-template">23.4 Architecture Decision Record template</a></li>
+<li><a href="#235-ai-coding-agent-rules">23.5 AI coding agent rules</a></li>
+</ul>
+</li>
+<li><a href="#24-initial-requirements-and-acceptance-criteria">24. Initial Requirements and Acceptance Criteria</a><ul>
+<li><a href="#req-001-collect-an-official-source-document">REQ-001 — Collect an official source document</a></li>
+<li><a href="#req-002-extract-a-traceable-financial-fact">REQ-002 — Extract a traceable financial fact</a></li>
+<li><a href="#req-003-verify-and-version-a-financial-fact">REQ-003 — Verify and version a financial fact</a></li>
+<li><a href="#req-004-calculate-a-reproducible-metric">REQ-004 — Calculate a reproducible metric</a></li>
+<li><a href="#req-005-detect-a-thesis-impact">REQ-005 — Detect a thesis impact</a></li>
+<li><a href="#req-006-produce-an-evidence-backed-explanation">REQ-006 — Produce an evidence-backed explanation</a></li>
+<li><a href="#req-007-deliver-a-material-alert-once">REQ-007 — Deliver a material alert once</a></li>
+</ul>
+</li>
+<li><a href="#25-delivery-roadmap">25. Delivery Roadmap</a><ul>
+<li><a href="#phase-0-foundation">Phase 0 — Foundation</a></li>
+<li><a href="#phase-1-evidence-vertical-slice">Phase 1 — Evidence vertical slice</a></li>
+<li><a href="#phase-2-financial-intelligence">Phase 2 — Financial intelligence</a></li>
+<li><a href="#phase-3-thesis-monitoring">Phase 3 — Thesis monitoring</a></li>
+<li><a href="#phase-4-ai-analyst">Phase 4 — AI analyst</a></li>
+<li><a href="#phase-5-market-data-and-scaling">Phase 5 — Market data and scaling</a></li>
+</ul>
+</li>
+<li><a href="#26-accepted-architecture-decision-summary">26. Accepted Architecture Decision Summary</a></li>
+<li><a href="#27-open-questions-and-working-defaults">27. Open Questions and Working Defaults</a></li>
+<li><a href="#28-definition-of-done">28. Definition of Done</a></li>
+<li><a href="#29-recommended-first-implementation-task">29. Recommended First Implementation Task</a></li>
+<li><a href="#30-context-restoration-prompt">30. Context Restoration Prompt</a></li>
+<li><a href="#31-glossary">31. Glossary</a></li>
+<li><a href="#32-revision-log">32. Revision Log</a></li>
+</ul>
+</div>
+
+</nav>
+<main>
+<h1 id="stock-intelligence-platform">Stock Intelligence Platform<a class="headerlink" href="#stock-intelligence-platform" title="Permanent link">#</a></h1>
+<h2 id="spec-driven-development-product-domain-and-software-architecture-specification">Spec-Driven Development — Product, Domain and Software Architecture Specification<a class="headerlink" href="#spec-driven-development-product-domain-and-software-architecture-specification" title="Permanent link">#</a></h2>
+<blockquote>
+<p><strong>Document status:</strong> Baseline specification<br />
+<strong>Version:</strong> 0.1.0<br />
+<strong>Created:</strong> 2026-09-30<br />
+<strong>Primary implementation language:</strong> Go<br />
+<strong>Frontend:</strong> Next.js + TypeScript<br />
+<strong>Architecture:</strong> Microservices + Event-driven + Pragmatic Ports &amp; Adapters<br />
+<strong>Primary market:</strong> Thailand / SET-listed securities</p>
+</blockquote>
+<hr />
+<h2 id="0-how-to-use-this-document">0. How to Use This Document<a class="headerlink" href="#0-how-to-use-this-document" title="Permanent link">#</a></h2>
+<p>This file is the primary source of truth for the product and its architecture.</p>
+<p>Before implementing a feature, an engineer or AI coding agent must:</p>
+<ol>
+<li>Read this document completely.</li>
+<li>Identify the affected bounded context and owning service.</li>
+<li>Update the relevant requirement, acceptance criteria, API/event schema, or ADR before changing code when behavior changes.</li>
+<li>Preserve service data ownership and dependency direction.</li>
+<li>Implement deterministic financial calculations in code.</li>
+<li>Preserve evidence lineage for every extracted or calculated fact.</li>
+<li>Run the required tests and update this document when a decision changes.</li>
+</ol>
+<p>This specification deliberately separates:</p>
+<ul>
+<li><strong>FACT:</strong> directly supported by a source document.</li>
+<li><strong>INFERENCE:</strong> conclusion derived from facts.</li>
+<li><strong>HYPOTHESIS:</strong> plausible explanation that still requires evidence.</li>
+<li><strong>CALCULATION:</strong> deterministic result produced from identified inputs and a versioned formula.</li>
+</ul>
+<hr />
+<h2 id="1-project-context">1. Project Context<a class="headerlink" href="#1-project-context" title="Permanent link">#</a></h2>
+<h3 id="11-product-owner-and-developer-context">1.1 Product owner and developer context<a class="headerlink" href="#11-product-owner-and-developer-context" title="Permanent link">#</a></h3>
+<p>The primary developer has:</p>
+<ul>
+<li>approximately four years of software engineering experience;</li>
+<li>working knowledge of JavaScript, TypeScript, and Go;</li>
+<li>experience or familiarity with Redis, Kafka, APIs, testing, distributed systems, and microservices;</li>
+<li>an undergraduate background in Mechanical Engineering;</li>
+<li>strong interest in investment analysis, financial engineering, AI infrastructure, data centers, and energy;</li>
+<li>a goal to build a serious portfolio project that can support applications for Go backend, FinTech, AI platform, and data platform roles.</li>
+</ul>
+<p>The system should therefore demonstrate:</p>
+<ul>
+<li>idiomatic Go;</li>
+<li>explicit domain boundaries;</li>
+<li>event-driven processing;</li>
+<li>reliable numerical calculation;</li>
+<li>source traceability;</li>
+<li>AI integration with verification;</li>
+<li>production-oriented observability and deployment practices.</li>
+</ul>
+<h3 id="12-product-vision">1.2 Product vision<a class="headerlink" href="#12-product-vision" title="Permanent link">#</a></h3>
+<p>Build a Stock Intelligence Platform that continuously collects primary-source company information, converts it into verifiable structured facts, recalculates financial metrics, connects changes to an investment thesis, and sends evidence-backed alerts when new information may materially change an assumption.</p>
+<h3 id="13-core-outcome">1.3 Core outcome<a class="headerlink" href="#13-core-outcome" title="Permanent link">#</a></h3>
+<p>The system must answer:</p>
+<ol>
+<li><strong>What changed?</strong></li>
+<li><strong>Which source proves it?</strong></li>
+<li><strong>Which number or assumption is affected?</strong></li>
+<li><strong>Why might it matter?</strong></li>
+<li><strong>How confident is the system?</strong></li>
+<li><strong>What remains unverified?</strong></li>
+</ol>
+<h3 id="14-initial-use-cases">1.4 Initial use cases<a class="headerlink" href="#14-initial-use-cases" title="Permanent link">#</a></h3>
+<ul>
+<li>Track SET filings, SEC filings, company IR publications, presentations, and selected market data.</li>
+<li>Monitor companies such as STPI, CCET, BGRIM, SPCG, KCE, HANA, GUNKUL, and other user-selected securities without hard-coding the product to those names.</li>
+<li>Detect changes involving customers, production capacity, utilization, capex, revenue, margins, EPS, cash flow, risks, catalysts, and valuation assumptions.</li>
+<li>Maintain an investment thesis with explicit drivers, assumptions, risks, catalysts, evidence, and invalidation triggers.</li>
+<li>Produce alerts that distinguish fact, calculation, inference, and hypothesis.</li>
+</ul>
+<hr />
+<h2 id="2-product-principles">2. Product Principles<a class="headerlink" href="#2-product-principles" title="Permanent link">#</a></h2>
+<h3 id="p-001-evidence-before-narrative">P-001 — Evidence before narrative<a class="headerlink" href="#p-001-evidence-before-narrative" title="Permanent link">#</a></h3>
+<p>Every material claim must link to a primary source when one exists. Source metadata must include URL, retrieval time, publication time when available, document hash, and exact document location such as page, table, row, or text span.</p>
+<h3 id="p-002-deterministic-numbers">P-002 — Deterministic numbers<a class="headerlink" href="#p-002-deterministic-numbers" title="Permanent link">#</a></h3>
+<p>Financial calculations must be performed by versioned code, never delegated to an LLM. The system must retain input values, units, periods, currency, formula version, and output.</p>
+<h3 id="p-003-fact-and-interpretation-are-different-records">P-003 — Fact and interpretation are different records<a class="headerlink" href="#p-003-fact-and-interpretation-are-different-records" title="Permanent link">#</a></h3>
+<p>Extracted facts and analyst interpretations must not be stored as the same entity. Updating an inference must not modify its underlying facts.</p>
+<h3 id="p-004-domain-ownership">P-004 — Domain ownership<a class="headerlink" href="#p-004-domain-ownership" title="Permanent link">#</a></h3>
+<p>Each microservice owns its domain data and writes only to its own database. Other services consume its API or published events.</p>
+<h3 id="p-005-material-alerts">P-005 — Material alerts<a class="headerlink" href="#p-005-material-alerts" title="Permanent link">#</a></h3>
+<p>The system should alert when a defined threshold, thesis trigger, or material information rule is met. It should not notify merely because a document exists.</p>
+<h3 id="p-006-auditability">P-006 — Auditability<a class="headerlink" href="#p-006-auditability" title="Permanent link">#</a></h3>
+<p>Every extraction, correction, calculation, thesis impact, AI analysis, and notification must have an audit trail.</p>
+<h3 id="p-007-replaceable-infrastructure">P-007 — Replaceable infrastructure<a class="headerlink" href="#p-007-replaceable-infrastructure" title="Permanent link">#</a></h3>
+<p>Business rules must not depend directly on PostgreSQL, Kafka, an HTTP framework, a specific LLM provider, or a specific notification channel.</p>
+<hr />
+<h2 id="3-scope">3. Scope<a class="headerlink" href="#3-scope" title="Permanent link">#</a></h2>
+<h3 id="31-mvp-scope">3.1 MVP scope<a class="headerlink" href="#31-mvp-scope" title="Permanent link">#</a></h3>
+<ul>
+<li>User authentication through an external OIDC-compatible provider.</li>
+<li>Company and security master data.</li>
+<li>Watchlists.</li>
+<li>Scheduled collection from selected official sources.</li>
+<li>Raw document storage and deduplication.</li>
+<li>PDF/HTML/XLSX parsing.</li>
+<li>Financial fact extraction with review status.</li>
+<li>Deterministic metric calculations.</li>
+<li>Thesis creation and editing.</li>
+<li>Rule-based thesis impact detection.</li>
+<li>Evidence-grounded AI explanations.</li>
+<li>In-app and at least one external notification channel.</li>
+<li>Dashboard showing documents, facts, metrics, thesis, alerts, and citations.</li>
+</ul>
+<h3 id="32-post-mvp-scope">3.2 Post-MVP scope<a class="headerlink" href="#32-post-mvp-scope" title="Permanent link">#</a></h3>
+<ul>
+<li>Intraday and higher-frequency market data.</li>
+<li>Portfolio construction and risk analytics.</li>
+<li>Backtesting.</li>
+<li>Collaborative research workspaces.</li>
+<li>Paid subscriptions and API usage plans.</li>
+<li>Broader international market coverage.</li>
+<li>Advanced model evaluation and human feedback loops.</li>
+</ul>
+<h3 id="33-explicit-non-goals-for-mvp">3.3 Explicit non-goals for MVP<a class="headerlink" href="#33-explicit-non-goals-for-mvp" title="Permanent link">#</a></h3>
+<ul>
+<li>Automated trade execution.</li>
+<li>Brokerage custody or money movement.</li>
+<li>Guaranteed buy/sell recommendations.</li>
+<li>Unreviewed AI-generated financial statements.</li>
+<li>Ultra-low-latency trading infrastructure.</li>
+<li>Rebuilding a general-purpose Bloomberg or Refinitiv terminal.</li>
+</ul>
+<hr />
+<h2 id="4-system-context">4. System Context<a class="headerlink" href="#4-system-context" title="Permanent link">#</a></h2>
+<div class="diagram"><pre class="mermaid">flowchart TB
+    USER[Investor / Analyst] --&gt; WEB[Next.js Web Application]
+    WEB --&gt; GW[API Gateway / BFF]
+
+    subgraph Platform[Stock Intelligence Platform]
+        GW --&gt; MASTER[Company Master]
+        GW --&gt; FUND[Fundamentals]
+        GW --&gt; RESEARCH[Research and Thesis]
+        GW --&gt; ALERT[Alert]
+
+        INGEST[Ingestion] --&gt; DOC[Document Intelligence]
+        DOC --&gt; FUND
+        FUND --&gt; METRIC[Metric and Valuation]
+        MARKET[Market Data] --&gt; METRIC
+        METRIC --&gt; RESEARCH
+        RESEARCH --&gt; AI[AI Analyst]
+        AI --&gt; ALERT
+    end
+
+    SET[SET / SEC] --&gt; INGEST
+    IR[Company IR] --&gt; INGEST
+    PROVIDER[Market Data Provider] --&gt; MARKET
+    ALERT --&gt; CHANNEL[LINE / Telegram / Email]
+</pre></div>
+<hr />
+<h2 id="5-architecture-decisions">5. Architecture Decisions<a class="headerlink" href="#5-architecture-decisions" title="Permanent link">#</a></h2>
+<h3 id="51-selected-architecture">5.1 Selected architecture<a class="headerlink" href="#51-selected-architecture" title="Permanent link">#</a></h3>
+<ul>
+<li>Microservices divided by bounded context.</li>
+<li>Event-driven communication for state-change propagation.</li>
+<li>REST or gRPC for synchronous queries and commands.</li>
+<li>Pragmatic Ports &amp; Adapters inside each Go service.</li>
+<li>DDD patterns only where domain complexity justifies them.</li>
+<li>Database ownership per service.</li>
+<li>Transactional Outbox for reliable event publication.</li>
+<li>OpenAPI for HTTP contracts.</li>
+<li>AsyncAPI and JSON Schema for event contracts.</li>
+<li>Independent build and deployment per backend service.</li>
+<li>Monorepo containing multiple Go modules and a root <code>go.work</code> for local development.</li>
+</ul>
+<h3 id="52-why-this-architecture">5.2 Why this architecture<a class="headerlink" href="#52-why-this-architecture" title="Permanent link">#</a></h3>
+<p>The project contains several business capabilities with different workloads and change rates:</p>
+<ul>
+<li>source collection is I/O-heavy;</li>
+<li>parsing and AI extraction are compute-heavy;</li>
+<li>market data is time-series oriented;</li>
+<li>financial metrics require deterministic domain rules;</li>
+<li>research and thesis management require rich relationships and audit history;</li>
+<li>notifications require retries and channel-specific behavior.</li>
+</ul>
+<p>These boundaries justify independent services while keeping each service internally simple.</p>
+<h3 id="53-architecture-constraints">5.3 Architecture constraints<a class="headerlink" href="#53-architecture-constraints" title="Permanent link">#</a></h3>
+<ul>
+<li>No service may directly query another service's tables.</li>
+<li>Cross-service shared domain models are prohibited.</li>
+<li>Contract packages may contain generated transport types, not shared business entities.</li>
+<li>Events are immutable.</li>
+<li>Breaking schema changes require a new event or API version.</li>
+<li>Distributed transactions are prohibited; use local transactions, Outbox, idempotency, and compensating actions.</li>
+</ul>
+<hr />
+<h2 id="6-microservice-boundaries">6. Microservice Boundaries<a class="headerlink" href="#6-microservice-boundaries" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Responsibility</th>
+<th>Owned data</th>
+<th>Primary outputs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api-gateway</code></td>
+<td>Authentication enforcement, routing, response aggregation, WebSocket/SSE connection</td>
+<td>No business records</td>
+<td>Public HTTP API</td>
+</tr>
+<tr>
+<td><code>company-master</code></td>
+<td>Company, security, exchange, industry, symbol history, corporate-action identity mapping</td>
+<td>Company, Security, Listing</td>
+<td>Company APIs and master-data events</td>
+</tr>
+<tr>
+<td><code>ingestion</code></td>
+<td>Schedules, source adapters, collection, hashing, deduplication, raw document registration</td>
+<td>Source, CollectionJob, RawDocument</td>
+<td><code>DocumentCollected</code></td>
+</tr>
+<tr>
+<td><code>document-intelligence</code></td>
+<td>Parsing, OCR, tables, chunks, embeddings, candidate fact extraction, citations</td>
+<td>ParsedDocument, Chunk, ExtractedFactCandidate</td>
+<td><code>DocumentParsed</code>, <code>FactsExtracted</code></td>
+</tr>
+<tr>
+<td><code>fundamentals</code></td>
+<td>Financial statement periods, verified financial facts, restatements, unit normalization</td>
+<td>FinancialFact, StatementPeriod, Restatement</td>
+<td><code>FinancialFactsUpdated</code></td>
+</tr>
+<tr>
+<td><code>market-data</code></td>
+<td>Price, volume, corporate-action adjustments, market snapshots</td>
+<td>PriceBar, MarketSnapshot</td>
+<td><code>MarketDataUpdated</code></td>
+</tr>
+<tr>
+<td><code>metric-valuation</code></td>
+<td>Financial ratios, EPS, margins, FCF, multiples, DCF and scenarios</td>
+<td>Metric, FormulaVersion, ValuationScenario</td>
+<td><code>MetricsCalculated</code>, <code>MetricChanged</code></td>
+</tr>
+<tr>
+<td><code>research-thesis</code></td>
+<td>Thesis, drivers, assumptions, risks, catalysts, triggers, evidence links</td>
+<td>Thesis, ThesisItem, Trigger</td>
+<td><code>ThesisImpacted</code></td>
+</tr>
+<tr>
+<td><code>ai-analyst</code></td>
+<td>Evidence retrieval, explanation, fact/inference classification, confidence and unresolved questions</td>
+<td>AnalysisRun, AnalysisClaim, Citation</td>
+<td><code>AnalysisCompleted</code></td>
+</tr>
+<tr>
+<td><code>alert</code></td>
+<td>Alert rules, materiality, deduplication, notification delivery and acknowledgement</td>
+<td>AlertRule, Alert, DeliveryAttempt</td>
+<td><code>AlertCreated</code>, <code>NotificationDelivered</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="61-services-intentionally-not-created">6.1 Services intentionally not created<a class="headerlink" href="#61-services-intentionally-not-created" title="Permanent link">#</a></h3>
+<ul>
+<li>No separate Redis service in the domain model.</li>
+<li>No separate repository service.</li>
+<li>No EPS, EBITDA, DCF, or individual-ratio service.</li>
+<li>No generic utility service.</li>
+<li>No service split solely by controller, use case, or database table.</li>
+</ul>
+<hr />
+<h2 id="7-service-communication">7. Service Communication<a class="headerlink" href="#7-service-communication" title="Permanent link">#</a></h2>
+<h3 id="71-synchronous-communication">7.1 Synchronous communication<a class="headerlink" href="#71-synchronous-communication" title="Permanent link">#</a></h3>
+<p>Use REST initially for:</p>
+<ul>
+<li>browser-facing commands and queries;</li>
+<li>low-volume internal lookups requiring an immediate response;</li>
+<li>operational and health endpoints.</li>
+</ul>
+<p>Use gRPC later only when profiling demonstrates a clear internal requirement or strongly typed streaming improves a defined workflow.</p>
+<h3 id="72-asynchronous-communication">7.2 Asynchronous communication<a class="headerlink" href="#72-asynchronous-communication" title="Permanent link">#</a></h3>
+<p>Use Kafka-compatible messaging for domain and integration events.</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant S as Scheduler
+    participant I as Ingestion
+    participant D as Document Intelligence
+    participant F as Fundamentals
+    participant M as Metric and Valuation
+    participant T as Research and Thesis
+    participant A as AI Analyst
+    participant N as Alert
+
+    S-&gt;&gt;I: Run source collection
+    I--&gt;&gt;D: DocumentCollected
+    D--&gt;&gt;F: FactsExtracted
+    F--&gt;&gt;M: FinancialFactsUpdated
+    M--&gt;&gt;T: MetricChanged
+    T--&gt;&gt;A: ThesisImpacted
+    A--&gt;&gt;N: AnalysisCompleted
+    N-&gt;&gt;N: Apply materiality and deduplication
+</pre></div>
+<h3 id="73-event-envelope">7.3 Event envelope<a class="headerlink" href="#73-event-envelope" title="Permanent link">#</a></h3>
+<p>All events must use this logical envelope:</p>
+<pre class="code"><code class="language-json">{
+  &quot;event_id&quot;: &quot;evt_01...&quot;,
+  &quot;event_type&quot;: &quot;financial.metric_changed.v1&quot;,
+  &quot;occurred_at&quot;: &quot;2026-09-30T01:00:00+07:00&quot;,
+  &quot;producer&quot;: &quot;metric-valuation&quot;,
+  &quot;aggregate_type&quot;: &quot;security&quot;,
+  &quot;aggregate_id&quot;: &quot;SET:CCET&quot;,
+  &quot;correlation_id&quot;: &quot;job_01...&quot;,
+  &quot;causation_id&quot;: &quot;evt_00...&quot;,
+  &quot;schema_version&quot;: 1,
+  &quot;payload&quot;: {}
+}
+</code></pre>
+
+<h3 id="74-initial-event-catalogue">7.4 Initial event catalogue<a class="headerlink" href="#74-initial-event-catalogue" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event type</th>
+<th>Producer</th>
+<th>Primary consumers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source.document_collected.v1</code></td>
+<td>ingestion</td>
+<td>document-intelligence</td>
+</tr>
+<tr>
+<td><code>document.parsed.v1</code></td>
+<td>document-intelligence</td>
+<td>audit/search pipeline</td>
+</tr>
+<tr>
+<td><code>document.facts_extracted.v1</code></td>
+<td>document-intelligence</td>
+<td>fundamentals</td>
+</tr>
+<tr>
+<td><code>fundamental.facts_updated.v1</code></td>
+<td>fundamentals</td>
+<td>metric-valuation, research-thesis</td>
+</tr>
+<tr>
+<td><code>market.data_updated.v1</code></td>
+<td>market-data</td>
+<td>metric-valuation</td>
+</tr>
+<tr>
+<td><code>valuation.metrics_calculated.v1</code></td>
+<td>metric-valuation</td>
+<td>research-thesis</td>
+</tr>
+<tr>
+<td><code>valuation.metric_changed.v1</code></td>
+<td>metric-valuation</td>
+<td>research-thesis, alert</td>
+</tr>
+<tr>
+<td><code>research.thesis_impacted.v1</code></td>
+<td>research-thesis</td>
+<td>ai-analyst, alert</td>
+</tr>
+<tr>
+<td><code>analysis.completed.v1</code></td>
+<td>ai-analyst</td>
+<td>alert</td>
+</tr>
+<tr>
+<td><code>alert.created.v1</code></td>
+<td>alert</td>
+<td>gateway, notification workers</td>
+</tr>
+<tr>
+<td><code>notification.delivered.v1</code></td>
+<td>alert</td>
+<td>audit/analytics</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="75-messaging-requirements">7.5 Messaging requirements<a class="headerlink" href="#75-messaging-requirements" title="Permanent link">#</a></h3>
+<ul>
+<li>At-least-once delivery is assumed.</li>
+<li>Every consumer must be idempotent.</li>
+<li><code>event_id</code> is the idempotency key.</li>
+<li>Poison messages move to a dead-letter topic after bounded retries.</li>
+<li>Events must carry correlation and causation IDs.</li>
+<li>Message payloads must not contain secrets.</li>
+<li>Producers publish through a Transactional Outbox.</li>
+<li>Consumers record processed event IDs or use an equivalent inbox pattern.</li>
+</ul>
+<hr />
+<h2 id="8-data-ownership-and-storage">8. Data Ownership and Storage<a class="headerlink" href="#8-data-ownership-and-storage" title="Permanent link">#</a></h2>
+<h3 id="81-storage-choices">8.1 Storage choices<a class="headerlink" href="#81-storage-choices" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>Initial store</th>
+<th>Evolution trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transactional domain data</td>
+<td>PostgreSQL</td>
+<td>Retain unless a measured limitation exists</td>
+</tr>
+<tr>
+<td>Semantic document retrieval</td>
+<td>PostgreSQL + pgvector</td>
+<td>Dedicated vector store only after measured need</td>
+</tr>
+<tr>
+<td>Raw files</td>
+<td>S3-compatible object storage</td>
+<td>Retain</td>
+</tr>
+<tr>
+<td>Cache and distributed locks</td>
+<td>Redis</td>
+<td>Retain or managed equivalent</td>
+</tr>
+<tr>
+<td>Event log</td>
+<td>Kafka-compatible broker</td>
+<td>Retain</td>
+</tr>
+<tr>
+<td>Market/time-series analytics</td>
+<td>PostgreSQL initially</td>
+<td>Add ClickHouse when query volume and retention justify it</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="82-database-ownership">8.2 Database ownership<a class="headerlink" href="#82-database-ownership" title="Permanent link">#</a></h3>
+<p>Each service owns a distinct database or logical schema and credentials. A single PostgreSQL cluster may host multiple service databases in development and early production, but ownership boundaries remain enforced.</p>
+<h3 id="83-financial-precision">8.3 Financial precision<a class="headerlink" href="#83-financial-precision" title="Permanent link">#</a></h3>
+<ul>
+<li>Do not use binary floating point for money or financial ratios persisted as authoritative results.</li>
+<li>Use a decimal library or integer minor units where appropriate.</li>
+<li>Store currency and unit with every financial fact.</li>
+<li>Store reported value separately from normalized value.</li>
+<li>Preserve the original sign and presentation when parsing statements.</li>
+</ul>
+<hr />
+<h2 id="9-core-domain-model">9. Core Domain Model<a class="headerlink" href="#9-core-domain-model" title="Permanent link">#</a></h2>
+<h3 id="91-company-master">9.1 Company master<a class="headerlink" href="#91-company-master" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Company
+ ├── company_id
+ ├── legal_name
+ ├── country
+ └── securities[]
+
+Security
+ ├── security_id
+ ├── exchange
+ ├── symbol
+ ├── currency
+ ├── active_period
+ └── symbol_history[]
+</code></pre>
+
+<h3 id="92-source-and-evidence">9.2 Source and evidence<a class="headerlink" href="#92-source-and-evidence" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">SourceDocument
+ ├── document_id
+ ├── source_type
+ ├── source_url
+ ├── published_at
+ ├── retrieved_at
+ ├── sha256
+ ├── mime_type
+ ├── object_key
+ └── parser_version
+
+EvidenceLocation
+ ├── document_id
+ ├── page_number
+ ├── table_identifier
+ ├── row_identifier
+ ├── text_span_start
+ ├── text_span_end
+ └── quoted_excerpt
+</code></pre>
+
+<h3 id="93-financial-fact">9.3 Financial fact<a class="headerlink" href="#93-financial-fact" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">FinancialFact
+ ├── fact_id
+ ├── security_id
+ ├── taxonomy_key
+ ├── reported_value
+ ├── normalized_value
+ ├── currency
+ ├── unit
+ ├── period_start
+ ├── period_end
+ ├── period_type
+ ├── fiscal_year
+ ├── fiscal_quarter
+ ├── consolidation_scope
+ ├── source_document_id
+ ├── evidence_location
+ ├── extraction_method
+ ├── verification_status
+ ├── restatement_version
+ └── created_at
+</code></pre>
+
+<p>Verification status:</p>
+<pre class="code"><code class="language-text">candidate → validated_by_rule → human_verified
+          ↘ rejected
+</code></pre>
+
+<h3 id="94-metric-calculation">9.4 Metric calculation<a class="headerlink" href="#94-metric-calculation" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">CalculatedMetric
+ ├── metric_id
+ ├── security_id
+ ├── metric_key
+ ├── value
+ ├── unit
+ ├── period
+ ├── formula_version
+ ├── input_fact_ids[]
+ ├── calculation_trace
+ └── calculated_at
+</code></pre>
+
+<h3 id="95-investment-thesis">9.5 Investment thesis<a class="headerlink" href="#95-investment-thesis" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Thesis
+ ├── thesis_id
+ ├── security_id
+ ├── title
+ ├── status
+ ├── base_case
+ ├── bull_case
+ ├── bear_case
+ ├── drivers[]
+ ├── assumptions[]
+ ├── risks[]
+ ├── catalysts[]
+ ├── triggers[]
+ └── evidence_links[]
+</code></pre>
+
+<p>Each thesis item contains:</p>
+<ul>
+<li>explicit statement;</li>
+<li>type: driver, assumption, risk, catalyst, or trigger;</li>
+<li>direction: positive, negative, or neutral;</li>
+<li>materiality;</li>
+<li>measurable condition when possible;</li>
+<li>supporting and counter evidence;</li>
+<li>review status;</li>
+<li>valid-from and valid-to timestamps.</li>
+</ul>
+<h3 id="96-analysis-claim">9.6 Analysis claim<a class="headerlink" href="#96-analysis-claim" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">AnalysisClaim
+ ├── claim_id
+ ├── analysis_run_id
+ ├── classification: FACT | CALCULATION | INFERENCE | HYPOTHESIS
+ ├── statement
+ ├── confidence
+ ├── citation_ids[]
+ ├── calculation_id
+ ├── counter_evidence_ids[]
+ └── unresolved_questions[]
+</code></pre>
+
+<hr />
+<h2 id="10-financial-calculation-rules">10. Financial Calculation Rules<a class="headerlink" href="#10-financial-calculation-rules" title="Permanent link">#</a></h2>
+<h3 id="101-initial-metrics">10.1 Initial metrics<a class="headerlink" href="#101-initial-metrics" title="Permanent link">#</a></h3>
+<ul>
+<li>Revenue growth: YoY, QoQ, MoM when the source frequency permits.</li>
+<li>Gross profit and gross margin.</li>
+<li>EBITDA and EBITDA margin, only when EBITDA definition is documented.</li>
+<li>EBIT and EBIT margin.</li>
+<li>Net profit and net margin.</li>
+<li>Basic and diluted EPS.</li>
+<li>CFO.</li>
+<li>CAPEX.</li>
+<li><code>FCF = CFO - CAPEX</code> using an explicitly defined CAPEX mapping.</li>
+<li>Net debt.</li>
+<li>ROE and ROIC with documented denominator convention.</li>
+<li>P/E.</li>
+<li>EV/EBITDA.</li>
+<li>Price-to-book.</li>
+<li>DCF scenarios.</li>
+</ul>
+<h3 id="102-calculation-requirements">10.2 Calculation requirements<a class="headerlink" href="#102-calculation-requirements" title="Permanent link">#</a></h3>
+<p>Every calculated metric must retain:</p>
+<ul>
+<li>formula name and version;</li>
+<li>exact input fact IDs;</li>
+<li>period alignment;</li>
+<li>unit conversions;</li>
+<li>currency conversion rate and date when applicable;</li>
+<li>treatment of negative or missing values;</li>
+<li>rounding mode;</li>
+<li>result precision;</li>
+<li>calculation timestamp.</li>
+</ul>
+<h3 id="103-restatements">10.3 Restatements<a class="headerlink" href="#103-restatements" title="Permanent link">#</a></h3>
+<p>When a company restates prior data:</p>
+<ol>
+<li>Do not overwrite the historical record silently.</li>
+<li>Create a new restatement version.</li>
+<li>Mark the prior version as superseded.</li>
+<li>Recalculate dependent metrics.</li>
+<li>Emit <code>fundamental.facts_updated.v1</code> with a restatement flag.</li>
+<li>Re-evaluate affected thesis assumptions.</li>
+</ol>
+<hr />
+<h2 id="11-ai-analyst-specification">11. AI Analyst Specification<a class="headerlink" href="#11-ai-analyst-specification" title="Permanent link">#</a></h2>
+<h3 id="111-allowed-responsibilities">11.1 Allowed responsibilities<a class="headerlink" href="#111-allowed-responsibilities" title="Permanent link">#</a></h3>
+<ul>
+<li>Extract candidate facts from documents.</li>
+<li>Classify text and document sections.</li>
+<li>Link statements to citations.</li>
+<li>Summarize verified facts and deterministic calculations.</li>
+<li>Identify possible thesis impacts.</li>
+<li>Generate hypotheses clearly labelled as hypotheses.</li>
+<li>Identify conflicting evidence and unanswered questions.</li>
+</ul>
+<h3 id="112-prohibited-responsibilities">11.2 Prohibited responsibilities<a class="headerlink" href="#112-prohibited-responsibilities" title="Permanent link">#</a></h3>
+<ul>
+<li>Invent missing financial values.</li>
+<li>Calculate authoritative metrics without the Metric service.</li>
+<li>Present inference as fact.</li>
+<li>Remove uncertainty or source conflict from the final result.</li>
+<li>make autonomous trade-execution decisions.</li>
+<li>cite a document that was not retrieved and stored.</li>
+</ul>
+<h3 id="113-accuracy-first-checks">11.3 Accuracy-first checks<a class="headerlink" href="#113-accuracy-first-checks" title="Permanent link">#</a></h3>
+<p>Every material analysis follows six checks:</p>
+<ol>
+<li><strong>SOURCE:</strong> prefer primary sources and record the origin of every important claim.</li>
+<li><strong>FACT VS INFERENCE:</strong> classify fact, calculation, inference, and hypothesis explicitly.</li>
+<li><strong>NUMBER:</strong> validate unit, currency, period, comparison basis, and formula.</li>
+<li><strong>BRIEF:</strong> follow the requested company, timeframe, metrics, and output constraints.</li>
+<li><strong>COUNTER-CHECK:</strong> search for conflicting or disconfirming evidence.</li>
+<li><strong>HUMAN:</strong> expose what remains unknown and leave the final investment decision to the user.</li>
+</ol>
+<h3 id="114-ai-output-contract">11.4 AI output contract<a class="headerlink" href="#114-ai-output-contract" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-json">{
+  &quot;summary&quot;: &quot;string&quot;,
+  &quot;claims&quot;: [
+    {
+      &quot;classification&quot;: &quot;FACT&quot;,
+      &quot;statement&quot;: &quot;string&quot;,
+      &quot;citation_ids&quot;: [&quot;cit_01&quot;],
+      &quot;confidence&quot;: 0.98
+    }
+  ],
+  &quot;affected_thesis_items&quot;: [
+    {
+      &quot;thesis_item_id&quot;: &quot;item_01&quot;,
+      &quot;impact&quot;: &quot;POSITIVE&quot;,
+      &quot;materiality&quot;: &quot;HIGH&quot;,
+      &quot;reason&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;counter_evidence&quot;: [],
+  &quot;unresolved_questions&quot;: []
+}
+</code></pre>
+
+<p>The service must reject an AI response that fails schema validation.</p>
+<hr />
+<h2 id="12-internal-architecture-of-each-go-service">12. Internal Architecture of Each Go Service<a class="headerlink" href="#12-internal-architecture-of-each-go-service" title="Permanent link">#</a></h2>
+<h3 id="121-selected-pattern">12.1 Selected pattern<a class="headerlink" href="#121-selected-pattern" title="Permanent link">#</a></h3>
+<p>Use <strong>Pragmatic Ports &amp; Adapters</strong>.</p>
+<ul>
+<li>Core packages contain domain rules and application use cases.</li>
+<li>Input adapters invoke the application.</li>
+<li>Output adapters implement interfaces required by the application.</li>
+<li><code>main.go</code> is the composition root.</li>
+<li>Interfaces live close to the consuming package.</li>
+<li>Folder depth is added only when the domain requires it.</li>
+</ul>
+<h3 id="122-dependency-direction">12.2 Dependency direction<a class="headerlink" href="#122-dependency-direction" title="Permanent link">#</a></h3>
+<div class="diagram"><pre class="mermaid">flowchart LR
+    HTTP[HTTP / gRPC / Kafka Consumer] --&gt; APP[Application Use Cases]
+    APP --&gt; DOMAIN[Domain Rules]
+    APP --&gt; PORT[Required Interfaces]
+    PG[PostgreSQL Adapter] --&gt; PORT
+    KAFKA[Kafka Producer Adapter] --&gt; PORT
+    API[External API Adapter] --&gt; PORT
+</pre></div>
+<p>The domain and application core must not import infrastructure packages.</p>
+<h3 id="123-clean-code-clean-architecture-and-ports-adapters">12.3 Clean Code, Clean Architecture, and Ports &amp; Adapters<a class="headerlink" href="#123-clean-code-clean-architecture-and-ports-adapters" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Role in this project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean Code</td>
+<td>Naming, small coherent APIs, explicit errors, focused functions, readable tests, minimal duplication</td>
+</tr>
+<tr>
+<td>Clean Architecture</td>
+<td>Dependency rule: infrastructure depends on the business core</td>
+</tr>
+<tr>
+<td>Ports &amp; Adapters</td>
+<td>Concrete organization for connecting HTTP, Kafka, databases, external APIs, storage, and LLMs to the core</td>
+</tr>
+</tbody>
+</table></div>
+<p>The project does not require identical layers in every service:</p>
+<ul>
+<li>Gateway and simple CRUD behavior can use handlers plus a small application package.</li>
+<li>Fundamentals, valuation, and thesis services use richer domain models.</li>
+<li>Ingestion and document processing use pipeline-oriented application code with ports for sources and sinks.</li>
+</ul>
+<h3 id="124-example-service-structure">12.4 Example service structure<a class="headerlink" href="#124-example-service-structure" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">services/research-thesis/
+├── cmd/
+│   └── server/
+│       └── main.go
+├── internal/
+│   ├── thesis/
+│   │   ├── thesis.go
+│   │   ├── item.go
+│   │   ├── service.go
+│   │   ├── repository.go
+│   │   ├── event.go
+│   │   └── errors.go
+│   └── adapters/
+│       ├── http/
+│       │   └── handler.go
+│       ├── kafka/
+│       │   ├── consumer.go
+│       │   └── publisher.go
+│       └── postgres/
+│           └── thesis_repository.go
+├── migrations/
+├── api/
+│   └── openapi.yaml
+├── Dockerfile
+├── go.mod
+└── go.sum
+</code></pre>
+
+<h3 id="125-go-coding-rules">12.5 Go coding rules<a class="headerlink" href="#125-go-coding-rules" title="Permanent link">#</a></h3>
+<ul>
+<li>Use <code>context.Context</code> as the first parameter for I/O and request-scoped operations.</li>
+<li>Wrap errors with meaningful operational context.</li>
+<li>Do not create a generic <code>utils</code> or <code>common</code> package.</li>
+<li>Prefer small interfaces owned by the consumer.</li>
+<li>Accept interfaces and return concrete types where practical.</li>
+<li>Keep transport DTOs outside domain entities.</li>
+<li>Do not expose database structs as public API responses.</li>
+<li>Validate at trust boundaries.</li>
+<li>Make side effects explicit.</li>
+<li>Use dependency injection through constructors; no global mutable service locator.</li>
+<li>Keep <code>main.go</code> focused on configuration, wiring, lifecycle, and shutdown.</li>
+</ul>
+<hr />
+<h2 id="13-repository-structure">13. Repository Structure<a class="headerlink" href="#13-repository-structure" title="Permanent link">#</a></h2>
+<pre class="code"><code class="language-text">stock-intelligence/
+├── services/
+│   ├── api-gateway/
+│   ├── company-master/
+│   ├── ingestion/
+│   ├── document-intelligence/
+│   ├── fundamentals/
+│   ├── market-data/
+│   ├── metric-valuation/
+│   ├── research-thesis/
+│   ├── ai-analyst/
+│   └── alert/
+│
+├── web/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── contracts/
+│   ├── openapi/
+│   ├── asyncapi/
+│   ├── events/
+│   └── protobuf/
+│
+├── deployments/
+│   ├── local/
+│   ├── kubernetes/
+│   ├── observability/
+│   └── migrations/
+│
+├── docs/
+│   ├── adr/
+│   ├── runbooks/
+│   └── data-dictionary/
+│
+├── scripts/
+├── go.work
+├── Makefile
+└── README.md
+</code></pre>
+
+<h3 id="131-module-policy">13.1 Module policy<a class="headerlink" href="#131-module-policy" title="Permanent link">#</a></h3>
+<ul>
+<li>Each backend service has its own <code>go.mod</code>.</li>
+<li>Root <code>go.work</code> is for local development only.</li>
+<li>Service deployments must not depend on <code>go.work</code>.</li>
+<li>Business-domain code must not be shared between services through Go imports.</li>
+<li>Generated contract types and narrowly scoped technical libraries may be shared only after a proven need.</li>
+</ul>
+<hr />
+<h2 id="14-initial-http-api-surface">14. Initial HTTP API Surface<a class="headerlink" href="#14-initial-http-api-surface" title="Permanent link">#</a></h2>
+<h3 id="141-company-and-watchlist">14.1 Company and watchlist<a class="headerlink" href="#141-company-and-watchlist" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/companies
+GET    /v1/securities/{securityId}
+GET    /v1/watchlists
+POST   /v1/watchlists
+POST   /v1/watchlists/{watchlistId}/securities
+DELETE /v1/watchlists/{watchlistId}/securities/{securityId}
+</code></pre>
+
+<h3 id="142-documents-and-evidence">14.2 Documents and evidence<a class="headerlink" href="#142-documents-and-evidence" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/documents
+GET    /v1/documents/{documentId}
+GET    /v1/documents/{documentId}/facts
+POST   /v1/facts/{factId}/verify
+POST   /v1/facts/{factId}/reject
+</code></pre>
+
+<h3 id="143-financials-and-valuation">14.3 Financials and valuation<a class="headerlink" href="#143-financials-and-valuation" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/financials
+GET    /v1/securities/{securityId}/metrics
+GET    /v1/securities/{securityId}/valuations
+POST   /v1/securities/{securityId}/valuation-scenarios
+</code></pre>
+
+<h3 id="144-thesis-and-alerts">14.4 Thesis and alerts<a class="headerlink" href="#144-thesis-and-alerts" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/theses
+POST   /v1/securities/{securityId}/theses
+PATCH  /v1/theses/{thesisId}
+POST   /v1/theses/{thesisId}/items
+POST   /v1/theses/{thesisId}/evaluate
+GET    /v1/alerts
+POST   /v1/alerts/{alertId}/acknowledge
+</code></pre>
+
+<h3 id="145-api-conventions">14.5 API conventions<a class="headerlink" href="#145-api-conventions" title="Permanent link">#</a></h3>
+<ul>
+<li>JSON request and response bodies.</li>
+<li>UTC timestamps in APIs; user interface renders Asia/Bangkok by default.</li>
+<li>Cursor pagination for unbounded lists.</li>
+<li>RFC 7807-style problem details for errors.</li>
+<li>Idempotency key required for retryable external commands.</li>
+<li>Optimistic concurrency on editable thesis resources.</li>
+<li>OpenAPI is updated before implementation when a public contract changes.</li>
+</ul>
+<hr />
+<h2 id="15-source-collection-pipeline">15. Source Collection Pipeline<a class="headerlink" href="#15-source-collection-pipeline" title="Permanent link">#</a></h2>
+<h3 id="151-processing-stages">15.1 Processing stages<a class="headerlink" href="#151-processing-stages" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">discover
+  → fetch
+  → hash
+  → deduplicate
+  → store raw document
+  → register metadata
+  → parse
+  → extract candidate facts
+  → validate schema and units
+  → persist candidates
+  → human/rule verification
+  → publish verified updates
+</code></pre>
+
+<h3 id="152-source-adapter-contract">15.2 Source adapter contract<a class="headerlink" href="#152-source-adapter-contract" title="Permanent link">#</a></h3>
+<p>Every source adapter must implement equivalent capabilities:</p>
+<pre class="code"><code class="language-go">type Source interface {
+    Discover(ctx context.Context, cursor Cursor) ([]DocumentRef, Cursor, error)
+    Fetch(ctx context.Context, ref DocumentRef) (Document, error)
+}
+</code></pre>
+
+<h3 id="153-collection-requirements">15.3 Collection requirements<a class="headerlink" href="#153-collection-requirements" title="Permanent link">#</a></h3>
+<ul>
+<li>Respect source rate limits and terms.</li>
+<li>Retry transient errors with capped exponential backoff and jitter.</li>
+<li>Do not retry permanent validation failures automatically.</li>
+<li>Store retrieval status and error category.</li>
+<li>Hash document bytes before parsing.</li>
+<li>Treat identical hashes as duplicate content while preserving discovery metadata.</li>
+<li>Retain parser and extractor versions.</li>
+</ul>
+<hr />
+<h2 id="16-thesis-impact-engine">16. Thesis Impact Engine<a class="headerlink" href="#16-thesis-impact-engine" title="Permanent link">#</a></h2>
+<h3 id="161-trigger-types">16.1 Trigger types<a class="headerlink" href="#161-trigger-types" title="Permanent link">#</a></h3>
+<ul>
+<li>Threshold: <code>gross_margin &lt; 0.06</code>.</li>
+<li>Percentage change: revenue growth deteriorates by more than a configured amount.</li>
+<li>State change: project status moves from planned to delayed.</li>
+<li>Evidence appearance: a named customer or project appears in a primary source.</li>
+<li>Evidence disappearance: expected disclosure is absent for a defined period.</li>
+<li>Contradiction: new evidence conflicts with a current assumption.</li>
+<li>Scheduled review: thesis has not been reviewed within a configured interval.</li>
+</ul>
+<h3 id="162-materiality">16.2 Materiality<a class="headerlink" href="#162-materiality" title="Permanent link">#</a></h3>
+<p>Initial materiality levels:</p>
+<pre class="code"><code class="language-text">LOW      informational; dashboard only
+MEDIUM   thesis item may require review
+HIGH     assumption or valuation may materially change
+CRITICAL invalidation condition or severe risk trigger
+</code></pre>
+
+<p>Materiality must be derived from explicit rules or a human-reviewed mapping. AI may propose materiality but cannot silently overwrite the rule-based result.</p>
+<hr />
+<h2 id="17-alert-contract">17. Alert Contract<a class="headerlink" href="#17-alert-contract" title="Permanent link">#</a></h2>
+<p>Every user-facing alert should contain:</p>
+<pre class="code"><code class="language-text">Title
+Security
+What changed
+Published and detected time
+Source and citation
+Affected metric
+Affected thesis item
+Materiality
+Fact / Calculation / Inference / Hypothesis labels
+Supporting evidence
+Counter evidence
+Unknowns
+Suggested review action
+Delivery status
+</code></pre>
+
+<p>Deduplication key should include:</p>
+<pre class="code"><code class="language-text">user_id + security_id + thesis_item_id + triggering_event_id + rule_version
+</code></pre>
+
+<hr />
+<h2 id="18-security-and-privacy">18. Security and Privacy<a class="headerlink" href="#18-security-and-privacy" title="Permanent link">#</a></h2>
+<ul>
+<li>Use OIDC/OAuth 2.0 compatible authentication.</li>
+<li>Enforce authorization in the owning service, not only in the gateway.</li>
+<li>Do not place access tokens, credentials, private document contents, or personal data in events.</li>
+<li>Store secrets in a secret manager in production.</li>
+<li>Encrypt traffic in transit.</li>
+<li>Encrypt managed storage at rest.</li>
+<li>Validate uploaded and downloaded file types and sizes.</li>
+<li>Apply egress allowlists to collectors where practical.</li>
+<li>Maintain audit logs for verification, thesis edits, and notification actions.</li>
+<li>Define data retention and deletion policies before supporting team workspaces.</li>
+</ul>
+<hr />
+<h2 id="19-reliability-and-non-functional-requirements">19. Reliability and Non-Functional Requirements<a class="headerlink" href="#19-reliability-and-non-functional-requirements" title="Permanent link">#</a></h2>
+<h3 id="191-initial-service-objectives">19.1 Initial service objectives<a class="headerlink" href="#191-initial-service-objectives" title="Permanent link">#</a></h3>
+<p>These are initial engineering targets and must be revisited after real usage data exists.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Initial target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public read API availability</td>
+<td>99.5% monthly</td>
+</tr>
+<tr>
+<td>New official document detection</td>
+<td>Within 15 minutes of a successful source check</td>
+</tr>
+<tr>
+<td>Normal document processing</td>
+<td>Within 10 minutes after collection</td>
+</tr>
+<tr>
+<td>Alert creation after verified material change</td>
+<td>Within 5 minutes</td>
+</tr>
+<tr>
+<td>Event loss</td>
+<td>Zero acknowledged events lost</td>
+</tr>
+<tr>
+<td>Citation coverage</td>
+<td>100% of FACT claims</td>
+</tr>
+<tr>
+<td>Calculation reproducibility</td>
+<td>100% from stored inputs and formula version</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="192-resilience">19.2 Resilience<a class="headerlink" href="#192-resilience" title="Permanent link">#</a></h3>
+<ul>
+<li>Graceful shutdown for all services.</li>
+<li>Health, readiness, and liveness endpoints.</li>
+<li>Timeouts on every network call.</li>
+<li>Bounded retries.</li>
+<li>Circuit breaking only where repeated failure justifies it.</li>
+<li>Backpressure on document and AI pipelines.</li>
+<li>Dead-letter handling and replay tooling.</li>
+<li>Idempotent consumers.</li>
+<li>Database migrations compatible with rolling deployments.</li>
+</ul>
+<hr />
+<h2 id="20-observability">20. Observability<a class="headerlink" href="#20-observability" title="Permanent link">#</a></h2>
+<h3 id="201-required-signals">20.1 Required signals<a class="headerlink" href="#201-required-signals" title="Permanent link">#</a></h3>
+<ul>
+<li>Structured logs.</li>
+<li>Metrics.</li>
+<li>Distributed traces.</li>
+<li>Audit events.</li>
+<li>Business pipeline metrics.</li>
+</ul>
+<h3 id="202-required-identifiers">20.2 Required identifiers<a class="headerlink" href="#202-required-identifiers" title="Permanent link">#</a></h3>
+<p>Every request, job, event, and analysis should carry where applicable:</p>
+<ul>
+<li><code>trace_id</code>;</li>
+<li><code>request_id</code>;</li>
+<li><code>correlation_id</code>;</li>
+<li><code>causation_id</code>;</li>
+<li><code>event_id</code>;</li>
+<li><code>job_id</code>;</li>
+<li><code>document_id</code>;</li>
+<li><code>security_id</code>.</li>
+</ul>
+<h3 id="203-core-operational-metrics">20.3 Core operational metrics<a class="headerlink" href="#203-core-operational-metrics" title="Permanent link">#</a></h3>
+<ul>
+<li>source checks and failures by source;</li>
+<li>documents collected, duplicated, parsed, and rejected;</li>
+<li>parsing latency;</li>
+<li>extraction validation failure rate;</li>
+<li>fact verification backlog;</li>
+<li>consumer lag;</li>
+<li>event retry and dead-letter count;</li>
+<li>metric recalculation latency;</li>
+<li>thesis impacts by materiality;</li>
+<li>AI schema failure and citation failure rate;</li>
+<li>alert delivery success and latency;</li>
+<li>external API latency and error rate;</li>
+<li>cost per processed document and per AI analysis.</li>
+</ul>
+<hr />
+<h2 id="21-testing-strategy">21. Testing Strategy<a class="headerlink" href="#21-testing-strategy" title="Permanent link">#</a></h2>
+<h3 id="211-domain-unit-tests">21.1 Domain unit tests<a class="headerlink" href="#211-domain-unit-tests" title="Permanent link">#</a></h3>
+<p>Required for:</p>
+<ul>
+<li>financial formulas;</li>
+<li>period normalization;</li>
+<li>unit and currency conversion;</li>
+<li>thesis trigger evaluation;</li>
+<li>materiality rules;</li>
+<li>restatement behavior;</li>
+<li>alert deduplication.</li>
+</ul>
+<h3 id="212-adapter-integration-tests">21.2 Adapter integration tests<a class="headerlink" href="#212-adapter-integration-tests" title="Permanent link">#</a></h3>
+<p>Required for:</p>
+<ul>
+<li>PostgreSQL repositories;</li>
+<li>Kafka publish/consume and Outbox behavior;</li>
+<li>object storage;</li>
+<li>source adapters using recorded fixtures;</li>
+<li>PDF/table parsers;</li>
+<li>notification channel adapters.</li>
+</ul>
+<h3 id="213-contract-tests">21.3 Contract tests<a class="headerlink" href="#213-contract-tests" title="Permanent link">#</a></h3>
+<ul>
+<li>Validate OpenAPI requests and responses.</li>
+<li>Validate every event against its versioned schema.</li>
+<li>Test consumer compatibility with current and supported prior event versions.</li>
+<li>Prevent a producer from publishing undocumented fields with changed meaning.</li>
+</ul>
+<h3 id="214-end-to-end-golden-path">21.4 End-to-end golden path<a class="headerlink" href="#214-end-to-end-golden-path" title="Permanent link">#</a></h3>
+<p>The baseline end-to-end fixture must prove:</p>
+<ol>
+<li>An official sample document is discovered.</li>
+<li>It is stored and deduplicated.</li>
+<li>A financial fact is extracted with evidence location.</li>
+<li>The fact is verified.</li>
+<li>A metric is recalculated reproducibly.</li>
+<li>A thesis trigger is matched.</li>
+<li>An evidence-backed analysis is created.</li>
+<li>One alert is delivered exactly once from the user's perspective.</li>
+</ol>
+<h3 id="215-ai-evaluation">21.5 AI evaluation<a class="headerlink" href="#215-ai-evaluation" title="Permanent link">#</a></h3>
+<p>Maintain a versioned evaluation set covering:</p>
+<ul>
+<li>extraction accuracy;</li>
+<li>citation correctness;</li>
+<li>numerical faithfulness;</li>
+<li>fact versus inference classification;</li>
+<li>conflicting evidence;</li>
+<li>insufficient evidence;</li>
+<li>Thai and English documents;</li>
+<li>prompt injection inside retrieved documents.</li>
+</ul>
+<hr />
+<h2 id="22-deployment-model">22. Deployment Model<a class="headerlink" href="#22-deployment-model" title="Permanent link">#</a></h2>
+<h3 id="221-local-development">22.1 Local development<a class="headerlink" href="#221-local-development" title="Permanent link">#</a></h3>
+<p>Use Docker Compose for:</p>
+<ul>
+<li>PostgreSQL databases;</li>
+<li>Kafka-compatible broker;</li>
+<li>Redis;</li>
+<li>S3-compatible object storage;</li>
+<li>observability stack;</li>
+<li>selected services under active development.</li>
+</ul>
+<p>Services may run directly through <code>go run</code> while dependencies run in containers.</p>
+<h3 id="222-production-evolution">22.2 Production evolution<a class="headerlink" href="#222-production-evolution" title="Permanent link">#</a></h3>
+<p>Phase 1 may use managed containers or a small container platform. Kubernetes should be introduced when independent scaling, deployment count, operational policy, or availability requirements justify its cost.</p>
+<h3 id="223-cicd">22.3 CI/CD<a class="headerlink" href="#223-cicd" title="Permanent link">#</a></h3>
+<p>For each changed service:</p>
+<ol>
+<li>format and static analysis;</li>
+<li>unit tests;</li>
+<li>contract validation;</li>
+<li>integration tests;</li>
+<li>build immutable container image;</li>
+<li>vulnerability and secret scanning;</li>
+<li>migration compatibility check;</li>
+<li>deploy to non-production;</li>
+<li>smoke test;</li>
+<li>controlled production rollout.</li>
+</ol>
+<hr />
+<h2 id="23-spec-driven-development-workflow">23. Spec-Driven Development Workflow<a class="headerlink" href="#23-spec-driven-development-workflow" title="Permanent link">#</a></h2>
+<h3 id="231-required-artifacts">23.1 Required artifacts<a class="headerlink" href="#231-required-artifacts" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Requirement
+  ↓
+Acceptance criteria
+  ↓
+Domain/API/Event contract
+  ↓
+Architecture decision when needed
+  ↓
+Implementation tasks
+  ↓
+Code and migrations
+  ↓
+Verification evidence
+</code></pre>
+
+<h3 id="232-change-procedure">23.2 Change procedure<a class="headerlink" href="#232-change-procedure" title="Permanent link">#</a></h3>
+<p>For every behavior change:</p>
+<ol>
+<li>Assign a requirement ID.</li>
+<li>Describe the user or system outcome.</li>
+<li>Identify the owning service.</li>
+<li>Add acceptance criteria in observable terms.</li>
+<li>Update OpenAPI, AsyncAPI, event JSON Schema, or data dictionary first when affected.</li>
+<li>Record a new ADR if the change affects service boundaries, ownership, communication style, storage technology, security model, or a cross-cutting convention.</li>
+<li>Break work into independently verifiable tasks.</li>
+<li>Implement the smallest vertical slice.</li>
+<li>Attach test results and known limitations.</li>
+<li>Update this specification and the ADR status.</li>
+</ol>
+<h3 id="233-requirement-template">23.3 Requirement template<a class="headerlink" href="#233-requirement-template" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-markdown">### REQ-XXX — Short title
+
+**Problem:**  
+Describe the user or system problem.
+
+**Owner:**  
+Owning microservice.
+
+**Inputs:**  
+Required data and source.
+
+**Behavior:**  
+Observable system behavior.
+
+**Outputs:**  
+API response, event, stored entity, or notification.
+
+**Acceptance criteria:**
+
+- [ ] Given / When / Then criterion.
+- [ ] Failure behavior is defined.
+- [ ] Audit and observability behavior is defined.
+
+**Contracts affected:**  
+OpenAPI, event schema, database migration, or none.
+
+**Risks and unknowns:**  
+Open questions and assumptions.
+</code></pre>
+
+<h3 id="234-architecture-decision-record-template">23.4 Architecture Decision Record template<a class="headerlink" href="#234-architecture-decision-record-template" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-markdown"># ADR-XXX: Decision title
+
+- Status: Proposed | Accepted | Superseded | Rejected
+- Date: YYYY-MM-DD
+
+## Context
+
+## Decision
+
+## Alternatives considered
+
+## Consequences
+
+## Migration or rollback plan
+</code></pre>
+
+<h3 id="235-ai-coding-agent-rules">23.5 AI coding agent rules<a class="headerlink" href="#235-ai-coding-agent-rules" title="Permanent link">#</a></h3>
+<p>An AI agent working on this project must:</p>
+<ul>
+<li>state which requirement and service it is changing;</li>
+<li>inspect the current contract before implementation;</li>
+<li>avoid inventing APIs, source fields, or financial semantics;</li>
+<li>retain backward compatibility unless the spec explicitly authorizes a break;</li>
+<li>keep business logic out of handlers and database adapters;</li>
+<li>update tests that protect behavior rather than mirror implementation details;</li>
+<li>report changed files, verification performed, and unresolved risks;</li>
+<li>update this specification when a decision changes;</li>
+<li>stop and surface ambiguity when financial meaning, data ownership, or destructive migration behavior cannot be inferred safely.</li>
+</ul>
+<hr />
+<h2 id="24-initial-requirements-and-acceptance-criteria">24. Initial Requirements and Acceptance Criteria<a class="headerlink" href="#24-initial-requirements-and-acceptance-criteria" title="Permanent link">#</a></h2>
+<h3 id="req-001-collect-an-official-source-document">REQ-001 — Collect an official source document<a class="headerlink" href="#req-001-collect-an-official-source-document" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>ingestion</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> A configured source can be checked on a schedule.</li>
+<li class="task"><input type="checkbox" disabled> A new document is downloaded and stored with URL, timestamps, MIME type, and SHA-256.</li>
+<li class="task"><input type="checkbox" disabled> Identical document bytes are not stored twice.</li>
+<li class="task"><input type="checkbox" disabled> Discovery metadata is retained even when content is duplicated.</li>
+<li class="task"><input type="checkbox" disabled> A <code>source.document_collected.v1</code> event is published through the Outbox.</li>
+<li class="task"><input type="checkbox" disabled> Transient and permanent failures are distinguishable in logs and metrics.</li>
+</ul>
+<h3 id="req-002-extract-a-traceable-financial-fact">REQ-002 — Extract a traceable financial fact<a class="headerlink" href="#req-002-extract-a-traceable-financial-fact" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>document-intelligence</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> The parser records its version.</li>
+<li class="task"><input type="checkbox" disabled> A candidate fact includes value, unit, period, taxonomy key, and evidence location.</li>
+<li class="task"><input type="checkbox" disabled> The source page or equivalent location can be shown to a reviewer.</li>
+<li class="task"><input type="checkbox" disabled> Invalid schema output is rejected.</li>
+<li class="task"><input type="checkbox" disabled> Candidate output does not become an authoritative financial fact automatically unless a documented validation rule permits it.</li>
+</ul>
+<h3 id="req-003-verify-and-version-a-financial-fact">REQ-003 — Verify and version a financial fact<a class="headerlink" href="#req-003-verify-and-version-a-financial-fact" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>fundamentals</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> A candidate can be verified or rejected.</li>
+<li class="task"><input type="checkbox" disabled> Verification records actor, time, and reason.</li>
+<li class="task"><input type="checkbox" disabled> A restatement creates a new version without deleting the old one.</li>
+<li class="task"><input type="checkbox" disabled> A verified change publishes <code>fundamental.facts_updated.v1</code>.</li>
+</ul>
+<h3 id="req-004-calculate-a-reproducible-metric">REQ-004 — Calculate a reproducible metric<a class="headerlink" href="#req-004-calculate-a-reproducible-metric" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>metric-valuation</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> A calculation records formula version and exact input IDs.</li>
+<li class="task"><input type="checkbox" disabled> Re-running with identical inputs produces the same output.</li>
+<li class="task"><input type="checkbox" disabled> Units, periods, missing values, and rounding behavior are tested.</li>
+<li class="task"><input type="checkbox" disabled> A material result change publishes <code>valuation.metric_changed.v1</code>.</li>
+</ul>
+<h3 id="req-005-detect-a-thesis-impact">REQ-005 — Detect a thesis impact<a class="headerlink" href="#req-005-detect-a-thesis-impact" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>research-thesis</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> A user can define a measurable thesis trigger.</li>
+<li class="task"><input type="checkbox" disabled> An incoming metric change is matched against relevant active triggers.</li>
+<li class="task"><input type="checkbox" disabled> The result identifies the affected thesis item and materiality.</li>
+<li class="task"><input type="checkbox" disabled> Trigger evaluation is idempotent.</li>
+<li class="task"><input type="checkbox" disabled> A match publishes <code>research.thesis_impacted.v1</code>.</li>
+</ul>
+<h3 id="req-006-produce-an-evidence-backed-explanation">REQ-006 — Produce an evidence-backed explanation<a class="headerlink" href="#req-006-produce-an-evidence-backed-explanation" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>ai-analyst</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Every FACT claim has at least one valid stored citation.</li>
+<li class="task"><input type="checkbox" disabled> Calculated values reference a Metric service result.</li>
+<li class="task"><input type="checkbox" disabled> Fact, calculation, inference, and hypothesis are classified separately.</li>
+<li class="task"><input type="checkbox" disabled> Counter evidence and unknowns are included when present.</li>
+<li class="task"><input type="checkbox" disabled> Schema-invalid responses are rejected or retried within a bounded policy.</li>
+</ul>
+<h3 id="req-007-deliver-a-material-alert-once">REQ-007 — Deliver a material alert once<a class="headerlink" href="#req-007-deliver-a-material-alert-once" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>alert</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Materiality rules determine whether a notification is sent.</li>
+<li class="task"><input type="checkbox" disabled> Duplicate upstream delivery does not create duplicate user-visible alerts.</li>
+<li class="task"><input type="checkbox" disabled> Delivery attempts and final status are auditable.</li>
+<li class="task"><input type="checkbox" disabled> An alert links to the affected thesis item, metric, and evidence.</li>
+</ul>
+<hr />
+<h2 id="25-delivery-roadmap">25. Delivery Roadmap<a class="headerlink" href="#25-delivery-roadmap" title="Permanent link">#</a></h2>
+<h3 id="phase-0-foundation">Phase 0 — Foundation<a class="headerlink" href="#phase-0-foundation" title="Permanent link">#</a></h3>
+<ul>
+<li>Repository and service templates.</li>
+<li>Contract validation.</li>
+<li>Local development environment.</li>
+<li>Logging, tracing, metrics, configuration, and graceful shutdown.</li>
+<li>CI pipeline.</li>
+</ul>
+<h3 id="phase-1-evidence-vertical-slice">Phase 1 — Evidence vertical slice<a class="headerlink" href="#phase-1-evidence-vertical-slice" title="Permanent link">#</a></h3>
+<p>Implement:</p>
+<ul>
+<li><code>company-master</code>;</li>
+<li><code>ingestion</code>;</li>
+<li><code>document-intelligence</code>;</li>
+<li>minimal <code>fundamentals</code>;</li>
+<li>minimal dashboard.</li>
+</ul>
+<p>Exit condition: an official document becomes a reviewable fact with exact evidence.</p>
+<h3 id="phase-2-financial-intelligence">Phase 2 — Financial intelligence<a class="headerlink" href="#phase-2-financial-intelligence" title="Permanent link">#</a></h3>
+<p>Implement:</p>
+<ul>
+<li>financial normalization;</li>
+<li>restatements;</li>
+<li>Metric and Valuation service;</li>
+<li>historical metric views.</li>
+</ul>
+<p>Exit condition: selected metrics are reproducible from stored facts.</p>
+<h3 id="phase-3-thesis-monitoring">Phase 3 — Thesis monitoring<a class="headerlink" href="#phase-3-thesis-monitoring" title="Permanent link">#</a></h3>
+<p>Implement:</p>
+<ul>
+<li>thesis model;</li>
+<li>triggers;</li>
+<li>impact engine;</li>
+<li>alert service;</li>
+<li>at least one external channel.</li>
+</ul>
+<p>Exit condition: a financial change produces exactly one traceable thesis alert.</p>
+<h3 id="phase-4-ai-analyst">Phase 4 — AI analyst<a class="headerlink" href="#phase-4-ai-analyst" title="Permanent link">#</a></h3>
+<p>Implement:</p>
+<ul>
+<li>evidence retrieval;</li>
+<li>structured AI output;</li>
+<li>six accuracy checks;</li>
+<li>evaluation dataset;</li>
+<li>human feedback.</li>
+</ul>
+<p>Exit condition: every factual claim is cited and all numbers originate from verified facts or deterministic calculations.</p>
+<h3 id="phase-5-market-data-and-scaling">Phase 5 — Market data and scaling<a class="headerlink" href="#phase-5-market-data-and-scaling" title="Permanent link">#</a></h3>
+<ul>
+<li>Market Data service.</li>
+<li>Event replay and operational tooling.</li>
+<li>Load testing.</li>
+<li>Cost measurement.</li>
+<li>ClickHouse or Kubernetes only if measured requirements justify them.</li>
+</ul>
+<hr />
+<h2 id="26-accepted-architecture-decision-summary">26. Accepted Architecture Decision Summary<a class="headerlink" href="#26-accepted-architecture-decision-summary" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Decision</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADR-001</td>
+<td>Split services by bounded context</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-002</td>
+<td>Go for backend services</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-003</td>
+<td>Next.js and TypeScript for web frontend</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-004</td>
+<td>Pragmatic Ports &amp; Adapters inside services</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-005</td>
+<td>PostgreSQL as initial transactional store</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-006</td>
+<td>Kafka-compatible event backbone</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-007</td>
+<td>Database ownership per service</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-008</td>
+<td>Transactional Outbox and idempotent consumers</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-009</td>
+<td>Deterministic code owns financial calculations</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-010</td>
+<td>LLM output must be structured, cited, and validated</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-011</td>
+<td>Monorepo with one Go module per service and root <code>go.work</code></td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-012</td>
+<td>REST first; introduce gRPC only for a demonstrated need</td>
+<td>Accepted</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="27-open-questions-and-working-defaults">27. Open Questions and Working Defaults<a class="headerlink" href="#27-open-questions-and-working-defaults" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Working default until decided</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exact official SET/SEC access mechanism</td>
+<td>Implement one source adapter after validating allowed access and document format</td>
+</tr>
+<tr>
+<td>Authentication provider</td>
+<td>OIDC-compatible managed provider</td>
+</tr>
+<tr>
+<td>Notification channel</td>
+<td>Choose LINE or Telegram based on accessible API and user preference</td>
+</tr>
+<tr>
+<td>AI provider</td>
+<td>Hide behind an output port; require structured JSON and citations</td>
+</tr>
+<tr>
+<td>Market data licensing</td>
+<td>Use data only after confirming permitted use and retention</td>
+</tr>
+<tr>
+<td>Fundamental taxonomy</td>
+<td>Start with a documented minimal canonical taxonomy and expand incrementally</td>
+</tr>
+<tr>
+<td>Deployment platform</td>
+<td>Docker Compose locally; managed containers for first production release</td>
+</tr>
+<tr>
+<td>Multi-tenancy</td>
+<td>Single-user-compatible model first, with <code>user_id</code> and ownership fields designed for later expansion</td>
+</tr>
+<tr>
+<td>Human verification UI</td>
+<td>Simple review queue before advanced collaborative workflows</td>
+</tr>
+</tbody>
+</table></div>
+<p>An open question is not permission to invent behavior. The working default must be replaced by an explicit decision when implementation reaches that boundary.</p>
+<hr />
+<h2 id="28-definition-of-done">28. Definition of Done<a class="headerlink" href="#28-definition-of-done" title="Permanent link">#</a></h2>
+<p>A feature is complete when:</p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Requirement and acceptance criteria are current.</li>
+<li class="task"><input type="checkbox" disabled> Owning service is unambiguous.</li>
+<li class="task"><input type="checkbox" disabled> Public API and event contracts are updated.</li>
+<li class="task"><input type="checkbox" disabled> Database migration is backward-compatible or has an approved rollout plan.</li>
+<li class="task"><input type="checkbox" disabled> Business rules have meaningful tests.</li>
+<li class="task"><input type="checkbox" disabled> Adapters have required integration tests.</li>
+<li class="task"><input type="checkbox" disabled> Logs, metrics, traces, and audit behavior are present.</li>
+<li class="task"><input type="checkbox" disabled> Idempotency and retry behavior are defined.</li>
+<li class="task"><input type="checkbox" disabled> Security and data ownership were reviewed.</li>
+<li class="task"><input type="checkbox" disabled> User-facing evidence links work.</li>
+<li class="task"><input type="checkbox" disabled> Documentation and relevant ADRs are updated.</li>
+<li class="task"><input type="checkbox" disabled> The change has been exercised through its intended vertical slice.</li>
+</ul>
+<hr />
+<h2 id="29-recommended-first-implementation-task">29. Recommended First Implementation Task<a class="headerlink" href="#29-recommended-first-implementation-task" title="Permanent link">#</a></h2>
+<p>Start with one thin vertical slice for one security and one official source:</p>
+<pre class="code"><code class="language-text">Company master record
+  → scheduled source discovery
+  → raw document storage
+  → exact document citation
+  → one candidate financial fact
+  → review and verification
+  → one deterministic metric
+  → dashboard display
+</code></pre>
+
+<p>Do not begin with all sources, every financial statement item, a general autonomous agent, Kubernetes, or a complete valuation suite. Preserve the target service contracts while implementing one verifiable path end to end.</p>
+<hr />
+<h2 id="30-context-restoration-prompt">30. Context Restoration Prompt<a class="headerlink" href="#30-context-restoration-prompt" title="Permanent link">#</a></h2>
+<p>Use the following prompt when continuing the project in a new session:</p>
+<pre class="code"><code class="language-text">Read stock-intelligence-spec-driven-development.md completely before acting.
+Treat it as the source of truth for product scope, microservice boundaries,
+data ownership, contracts, accuracy rules, and delivery sequence.
+
+First report:
+1. the active requirement;
+2. the owning service;
+3. affected API/event/data contracts;
+4. the smallest verifiable vertical slice;
+5. unresolved decisions that actually block implementation.
+
+Then implement or update the requested work. Preserve deterministic financial
+calculations, evidence lineage, FACT/INFERENCE/HYPOTHESIS separation,
+idempotent event processing, and Pragmatic Ports &amp; Adapters in Go.
+Do not invent source behavior or financial semantics.
+</code></pre>
+
+<hr />
+<h2 id="31-glossary">31. Glossary<a class="headerlink" href="#31-glossary" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning in this project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bounded Context</td>
+<td>Domain boundary with its own language, model, and ownership</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>Interface required or exposed by the application core</td>
+</tr>
+<tr>
+<td>Adapter</td>
+<td>Technology-specific implementation connecting a port to the outside world</td>
+</tr>
+<tr>
+<td>Driving Adapter</td>
+<td>HTTP, gRPC, Kafka consumer, CLI, or scheduler that invokes the application</td>
+</tr>
+<tr>
+<td>Driven Adapter</td>
+<td>Database, broker producer, external API, storage, or LLM implementation used by the application</td>
+</tr>
+<tr>
+<td>Outbox</td>
+<td>Records events in the same local transaction as domain changes for reliable later publication</td>
+</tr>
+<tr>
+<td>Inbox</td>
+<td>Consumer-side record used to prevent duplicate event processing</td>
+</tr>
+<tr>
+<td>Evidence Lineage</td>
+<td>Trace from a claim or number back to exact source content and processing history</td>
+</tr>
+<tr>
+<td>Thesis</td>
+<td>Structured investment view containing drivers, assumptions, risks, catalysts, and invalidation triggers</td>
+</tr>
+<tr>
+<td>Materiality</td>
+<td>Degree to which information may affect a thesis, risk assessment, or valuation</td>
+</tr>
+<tr>
+<td>Restatement</td>
+<td>A newer authoritative version of a previously reported financial value</td>
+</tr>
+<tr>
+<td>Formula Version</td>
+<td>Identifier for the exact deterministic calculation logic used to produce a metric</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="32-revision-log">32. Revision Log<a class="headerlink" href="#32-revision-log" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1.0</td>
+<td>2026-09-30</td>
+<td>Initial baseline capturing product intent, microservice architecture, Go repository structure, Ports &amp; Adapters, data contracts, accuracy rules, SDD workflow, and delivery roadmap</td>
+</tr>
+</tbody>
+</table></div>
+</main>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "strict" });
+</script>
+</body>
+</html>
