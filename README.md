@@ -45,7 +45,7 @@ Core rules:
 - Microservice boundaries, event catalogue and data ownership
 - Core domain model, financial calculation rules and restatement handling
 - AI analyst rules: what it may and may not do, plus its output contract
-- Go service layout, coding rules and repository structure
+- Go service layout, coding rules, and the microservices-monorepo structure
 - HTTP API surface, security, reliability targets and observability
 - Testing strategy, deployment model and CI/CD
 - Spec-driven workflow, requirement and ADR templates, initial requirements
@@ -77,4 +77,4 @@ GitHub Pages redeploys from `main` automatically, usually within a minute.
 
 ## Status
 
-Version **0.1.0** (English) and **0.1.0-th** (Thai) are the baseline specification, dated 2026-09-30.
+Current version: **0.1.1** (English) and **0.1.1-th** (Thai), dated 2026-09-30. This release expands Section 13 to separate the source monorepo from the runtime microservices.

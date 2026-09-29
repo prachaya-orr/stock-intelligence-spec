@@ -173,7 +173,11 @@ li.task input { margin-right: 6px; }
 </ul>
 </li>
 <li><a href="#13-โครงสราง-repository">13. โครงสร้าง Repository</a><ul>
-<li><a href="#131-module-policy">13.1 Module Policy</a></li>
+<li><a href="#131-source-boundary-กบ-runtime-boundary">13.1 Source Boundary กับ Runtime Boundary</a></li>
+<li><a href="#132-module-และ-deployment-policy">13.2 Module และ Deployment Policy</a></li>
+<li><a href="#133-เกณฑททำใหเปน-microservices-จรง">13.3 เกณฑ์ที่ทำให้เป็น Microservices จริง</a></li>
+<li><a href="#134-สญญาณวาเรมกลายเปน-distributed-monolith">13.4 สัญญาณว่าเริ่มกลายเป็น Distributed Monolith</a></li>
+<li><a href="#135-เหตผลทยงเลอก-monorepo">13.5 เหตุผลที่ยังเลือก Monorepo</a></li>
 </ul>
 </li>
 <li><a href="#14-http-api-เรมตน">14. HTTP API เริ่มต้น</a><ul>
@@ -266,7 +270,7 @@ li.task input { margin-right: 6px; }
 <h2 id="ขอกำหนดการพฒนาแบบ-spec-driven-development">ข้อกำหนดการพัฒนาแบบ Spec-Driven Development<a class="headerlink" href="#ขอกำหนดการพฒนาแบบ-spec-driven-development" title="Permanent link">#</a></h2>
 <blockquote>
 <p><strong>สถานะเอกสาร:</strong> ข้อกำหนดฉบับตั้งต้น<br />
-<strong>เวอร์ชัน:</strong> 0.1.0-th<br />
+<strong>เวอร์ชัน:</strong> 0.1.1-th<br />
 <strong>วันที่จัดทำ:</strong> 30 กันยายน 2026<br />
 <strong>ภาษาหลักของ Backend:</strong> Go<br />
 <strong>Frontend:</strong> Next.js + TypeScript<br />
@@ -1028,13 +1032,46 @@ EvidenceLocation
 </ul>
 <hr />
 <h2 id="13-โครงสราง-repository">13. โครงสร้าง Repository<a class="headerlink" href="#13-โครงสราง-repository" title="Permanent link">#</a></h2>
+<p>โครงสร้างนี้เป็น <strong>Microservices Monorepo</strong>: Source Code อยู่ใน Git Repository เดียว แต่แต่ละ Service เป็นหน่วย Build, Test, Deploy, Scale และถือครองข้อมูลอย่างอิสระ การอยู่ Repository เดียวกันไม่ได้ทำให้ระบบเป็น Monolith; ขอบเขต Runtime และ Data Ownership เป็นตัวตัดสิน</p>
 <pre class="code"><code class="language-text">stock-intelligence/
 ├── services/
-│   ├── api-gateway/
-│   ├── company-master/
-│   ├── ingestion/
+│   ├── api-gateway/                  # Independent deployable
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   ├── api/openapi.yaml
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── ingestion/                    # Independent deployable + own DB
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   │   ├── collection/           # Application core
+│   │   │   └── adapters/             # SET, object storage, Kafka, Postgres
+│   │   ├── api/openapi.yaml
+│   │   ├── events/
+│   │   ├── migrations/               # เฉพาะ ingestion_db
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── fundamentals/                 # Independent deployable + own DB
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   │   ├── financialfact/        # Domain/Application core
+│   │   │   └── adapters/             # HTTP, Kafka, Postgres
+│   │   ├── api/openapi.yaml
+│   │   ├── events/
+│   │   ├── migrations/               # เฉพาะ fundamentals_db
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── company-master/               # โครงสร้างภายในแบบเดียวกัน
 │   ├── document-intelligence/
-│   ├── fundamentals/
 │   ├── market-data/
 │   ├── metric-valuation/
 │   ├── research-thesis/
@@ -1048,16 +1085,14 @@ EvidenceLocation
 │   └── tsconfig.json
 │
 ├── contracts/
-│   ├── openapi/
-│   ├── asyncapi/
-│   ├── events/
-│   └── protobuf/
+│   ├── asyncapi/platform.yaml         # Catalogue และ compatibility check
+│   ├── events/                        # Versioned JSON Schema เท่านั้น
+│   └── protobuf/                      # เพิ่มเมื่อมี gRPC จริง
 │
 ├── deployments/
-│   ├── local/
-│   ├── kubernetes/
-│   ├── observability/
-│   └── migrations/
+│   ├── local/docker-compose.yml       # รวมระบบเพื่อรันในเครื่อง
+│   ├── platform/                      # Broker, observability, ingress
+│   └── environments/                  # Environment composition
 │
 ├── docs/
 │   ├── adr/
@@ -1070,13 +1105,88 @@ EvidenceLocation
 └── README.md
 </code></pre>
 
-<h3 id="131-module-policy">13.1 Module Policy<a class="headerlink" href="#131-module-policy" title="Permanent link">#</a></h3>
+<h3 id="131-source-boundary-กบ-runtime-boundary">13.1 Source Boundary กับ Runtime Boundary<a class="headerlink" href="#131-source-boundary-กบ-runtime-boundary" title="Permanent link">#</a></h3>
+<div class="diagram"><pre class="mermaid">flowchart TB
+    REPO[One Git Monorepo]
+    REPO --&gt; CI1[CI: ingestion path]
+    REPO --&gt; CI2[CI: fundamentals path]
+    REPO --&gt; CI3[CI: research-thesis path]
+
+    CI1 --&gt; IMG1[ingestion image]
+    CI2 --&gt; IMG2[fundamentals image]
+    CI3 --&gt; IMG3[research-thesis image]
+
+    IMG1 --&gt; RUN1[Ingestion deployment + ingestion_db]
+    IMG2 --&gt; RUN2[Fundamentals deployment + fundamentals_db]
+    IMG3 --&gt; RUN3[Research deployment + research_db]
+</pre></div>
+<p>การเปลี่ยน <code>services/ingestion/**</code> ต้อง Build และ Deploy <code>ingestion</code> โดยไม่บังคับ Deploy <code>fundamentals</code> หรือ <code>research-thesis</code> เว้นแต่ Public Contract เปลี่ยนและ Compatibility Check ระบุว่าต้องประสาน Version</p>
+<h3 id="132-module-และ-deployment-policy">13.2 Module และ Deployment Policy<a class="headerlink" href="#132-module-และ-deployment-policy" title="Permanent link">#</a></h3>
 <ul>
 <li>Backend Service แต่ละตัวมี <code>go.mod</code> ของตัวเอง</li>
 <li>Root <code>go.work</code> ใช้สำหรับ Local Development เท่านั้น</li>
 <li>Deployment ห้ามพึ่ง <code>go.work</code></li>
+<li>แต่ละ Service สร้าง Container Image ของตัวเอง</li>
+<li>แต่ละ Service มี Deployment Manifest, Runtime Configuration และ Migration ของตัวเอง</li>
+<li>CI ใช้ Path Filter และทดสอบเฉพาะ Service ที่เปลี่ยน พร้อมรัน Contract Compatibility Check</li>
 <li>ห้ามแชร์ Business Domain Code ระหว่าง Service ผ่าน Go Import</li>
+<li>Service หนึ่งห้าม Import <code>internal/</code> ของอีก Service</li>
+<li>Service ติดต่อกันผ่าน Versioned API หรือ Event เท่านั้น</li>
+<li>แต่ละ Service ใช้ Database Credential ที่เข้าถึงได้เฉพาะ Database ของตัวเอง</li>
 <li>Generated Contract Type และ Technical Library ขนาดเล็กแชร์ได้เมื่อพิสูจน์ความจำเป็นแล้ว</li>
+</ul>
+<h3 id="133-เกณฑททำใหเปน-microservices-จรง">13.3 เกณฑ์ที่ทำให้เป็น Microservices จริง<a class="headerlink" href="#133-เกณฑททำใหเปน-microservices-จรง" title="Permanent link">#</a></h3>
+<p>Service ต้องผ่านเกณฑ์ต่อไปนี้:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>เกณฑ์</th>
+<th>ข้อกำหนด</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build</td>
+<td>Build Binary และ Container Image แยกได้</td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td>Release, Rollback และ Scale แยกได้</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>เป็นเจ้าของ Schema, Migration และ Credential ของตัวเอง</td>
+</tr>
+<tr>
+<td>Contract</td>
+<td>สื่อสารผ่าน Versioned API/Event</td>
+</tr>
+<tr>
+<td>Failure</td>
+<td>Failure ของ Service หนึ่งไม่ทำให้ทุก Process ล้มพร้อมกัน</td>
+</tr>
+<tr>
+<td>Team/Change</td>
+<td>แก้ Internal Implementation ได้โดยไม่ต้องแก้ทุก Service</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="134-สญญาณวาเรมกลายเปน-distributed-monolith">13.4 สัญญาณว่าเริ่มกลายเป็น Distributed Monolith<a class="headerlink" href="#134-สญญาณวาเรมกลายเปน-distributed-monolith" title="Permanent link">#</a></h3>
+<p>ต้องแก้ Architecture หากพบว่า:</p>
+<ul>
+<li>ทุก Service ต้อง Deploy พร้อมกันเสมอ</li>
+<li>Service หลายตัวอ่านหรือเขียน Database ชุดเดียวกัน</li>
+<li>Import Domain Package ข้าม Service</li>
+<li>Event เป็นเพียงคำสั่งให้ทำขั้นตอนถัดไปจนทุก Service Coupling กันเป็นสายยาว</li>
+<li>Breaking Contract เกิดบ่อยโดยไม่มี Version หรือ Compatibility Period</li>
+<li>Request หนึ่งต้องเรียก Synchronous ต่อกันหลาย Service จนใช้งานไม่ได้เมื่อ Service ใด Service หนึ่งช้า</li>
+</ul>
+<h3 id="135-เหตผลทยงเลอก-monorepo">13.5 เหตุผลที่ยังเลือก Monorepo<a class="headerlink" href="#135-เหตผลทยงเลอก-monorepo" title="Permanent link">#</a></h3>
+<ul>
+<li>ผู้พัฒนาหลักยังเป็นคนเดียว ทำให้ค้นหา แก้ Contract และรันระบบรวมได้ง่าย</li>
+<li>Atomic Change ข้าม Producer, Schema และ Consumer ทำได้ใน Pull Request เดียว</li>
+<li>ใช้ CI/CD และ Code Ownership บังคับ Runtime Boundary แทนการแยก Git Repository ตั้งแต่เริ่มต้น</li>
+<li>สามารถย้าย Service ใดออกเป็น Polyrepo ภายหลังได้ เพราะไม่มี Cross-service Go Import และแต่ละ Service มี <code>go.mod</code>, Dockerfile และ Deployment ของตัวเอง</li>
 </ul>
 <hr />
 <h2 id="14-http-api-เรมตน">14. HTTP API เริ่มต้น<a class="headerlink" href="#14-http-api-เรมตน" title="Permanent link">#</a></h2>
@@ -1851,6 +1961,11 @@ Idempotent Event Processing และ Pragmatic Ports &amp; Adapters ใน Go
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>0.1.1-th</td>
+<td>2026-09-30</td>
+<td>ขยาย Section 13 ให้แยก Source Monorepo ออกจาก Runtime Microservices ระบุ Independent Build/Deploy/Data Boundary และเกณฑ์ป้องกัน Distributed Monolith</td>
+</tr>
 <tr>
 <td>0.1.0-th</td>
 <td>2026-09-30</td>

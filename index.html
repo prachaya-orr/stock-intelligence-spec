@@ -171,7 +171,11 @@ li.task input { margin-right: 6px; }
 </ul>
 </li>
 <li><a href="#13-repository-structure">13. Repository Structure</a><ul>
-<li><a href="#131-module-policy">13.1 Module policy</a></li>
+<li><a href="#131-source-boundary-versus-runtime-boundary">13.1 Source boundary versus runtime boundary</a></li>
+<li><a href="#132-module-and-deployment-policy">13.2 Module and deployment policy</a></li>
+<li><a href="#133-conditions-for-genuine-microservices">13.3 Conditions for genuine microservices</a></li>
+<li><a href="#134-distributed-monolith-warning-signs">13.4 Distributed monolith warning signs</a></li>
+<li><a href="#135-why-the-project-still-uses-a-monorepo">13.5 Why the project still uses a monorepo</a></li>
 </ul>
 </li>
 <li><a href="#14-initial-http-api-surface">14. Initial HTTP API Surface</a><ul>
@@ -264,7 +268,7 @@ li.task input { margin-right: 6px; }
 <h2 id="spec-driven-development-product-domain-and-software-architecture-specification">Spec-Driven Development — Product, Domain and Software Architecture Specification<a class="headerlink" href="#spec-driven-development-product-domain-and-software-architecture-specification" title="Permanent link">#</a></h2>
 <blockquote>
 <p><strong>Document status:</strong> Baseline specification<br />
-<strong>Version:</strong> 0.1.0<br />
+<strong>Version:</strong> 0.1.1<br />
 <strong>Created:</strong> 2026-09-30<br />
 <strong>Primary implementation language:</strong> Go<br />
 <strong>Frontend:</strong> Next.js + TypeScript<br />
@@ -1027,13 +1031,46 @@ EvidenceLocation
 </ul>
 <hr />
 <h2 id="13-repository-structure">13. Repository Structure<a class="headerlink" href="#13-repository-structure" title="Permanent link">#</a></h2>
+<p>This is a <strong>microservices monorepo</strong>: source code lives in one Git repository while every service remains an independent unit of build, test, deployment, scaling, and data ownership. Repository count does not define a monolith; runtime and data boundaries do.</p>
 <pre class="code"><code class="language-text">stock-intelligence/
 ├── services/
-│   ├── api-gateway/
-│   ├── company-master/
-│   ├── ingestion/
+│   ├── api-gateway/                  # Independent deployable
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   ├── api/openapi.yaml
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── ingestion/                    # Independent deployable + own DB
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   │   ├── collection/           # Application core
+│   │   │   └── adapters/             # SET, object storage, Kafka, Postgres
+│   │   ├── api/openapi.yaml
+│   │   ├── events/
+│   │   ├── migrations/               # ingestion_db only
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── fundamentals/                 # Independent deployable + own DB
+│   │   ├── cmd/server/main.go
+│   │   ├── internal/
+│   │   │   ├── financialfact/        # Domain/application core
+│   │   │   └── adapters/             # HTTP, Kafka, Postgres
+│   │   ├── api/openapi.yaml
+│   │   ├── events/
+│   │   ├── migrations/               # fundamentals_db only
+│   │   ├── deploy/
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   └── go.sum
+│   │
+│   ├── company-master/               # Same internal boundary pattern
 │   ├── document-intelligence/
-│   ├── fundamentals/
 │   ├── market-data/
 │   ├── metric-valuation/
 │   ├── research-thesis/
@@ -1047,16 +1084,14 @@ EvidenceLocation
 │   └── tsconfig.json
 │
 ├── contracts/
-│   ├── openapi/
-│   ├── asyncapi/
-│   ├── events/
-│   └── protobuf/
+│   ├── asyncapi/platform.yaml         # Catalogue and compatibility checks
+│   ├── events/                        # Versioned JSON Schema only
+│   └── protobuf/                      # Added only when gRPC exists
 │
 ├── deployments/
-│   ├── local/
-│   ├── kubernetes/
-│   ├── observability/
-│   └── migrations/
+│   ├── local/docker-compose.yml       # Local system composition
+│   ├── platform/                      # Broker, observability, ingress
+│   └── environments/                  # Environment composition
 │
 ├── docs/
 │   ├── adr/
@@ -1069,13 +1104,87 @@ EvidenceLocation
 └── README.md
 </code></pre>
 
-<h3 id="131-module-policy">13.1 Module policy<a class="headerlink" href="#131-module-policy" title="Permanent link">#</a></h3>
+<h3 id="131-source-boundary-versus-runtime-boundary">13.1 Source boundary versus runtime boundary<a class="headerlink" href="#131-source-boundary-versus-runtime-boundary" title="Permanent link">#</a></h3>
+<div class="diagram"><pre class="mermaid">flowchart TB
+    REPO[One Git Monorepo]
+    REPO --&gt; CI1[CI: ingestion path]
+    REPO --&gt; CI2[CI: fundamentals path]
+    REPO --&gt; CI3[CI: research-thesis path]
+
+    CI1 --&gt; IMG1[ingestion image]
+    CI2 --&gt; IMG2[fundamentals image]
+    CI3 --&gt; IMG3[research-thesis image]
+
+    IMG1 --&gt; RUN1[Ingestion deployment + ingestion_db]
+    IMG2 --&gt; RUN2[Fundamentals deployment + fundamentals_db]
+    IMG3 --&gt; RUN3[Research deployment + research_db]
+</pre></div>
+<p>A change under <code>services/ingestion/**</code> builds and deploys <code>ingestion</code> without forcing deployment of <code>fundamentals</code> or <code>research-thesis</code>, unless a public contract changes and compatibility checks require a coordinated version transition.</p>
+<h3 id="132-module-and-deployment-policy">13.2 Module and deployment policy<a class="headerlink" href="#132-module-and-deployment-policy" title="Permanent link">#</a></h3>
 <ul>
 <li>Each backend service has its own <code>go.mod</code>.</li>
 <li>Root <code>go.work</code> is for local development only.</li>
 <li>Service deployments must not depend on <code>go.work</code>.</li>
+<li>Each service produces its own container image.</li>
+<li>Each service owns deployment manifests, runtime configuration, and migrations.</li>
+<li>CI uses path filters and tests affected services plus contract compatibility.</li>
 <li>Business-domain code must not be shared between services through Go imports.</li>
+<li>A service must not import another service's <code>internal/</code> packages.</li>
+<li>Services communicate only through versioned APIs or events.</li>
+<li>Each service uses credentials limited to its own database.</li>
 <li>Generated contract types and narrowly scoped technical libraries may be shared only after a proven need.</li>
+</ul>
+<h3 id="133-conditions-for-genuine-microservices">13.3 Conditions for genuine microservices<a class="headerlink" href="#133-conditions-for-genuine-microservices" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build</td>
+<td>Build a binary and container image independently</td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td>Release, roll back, and scale independently</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>Own its schema, migrations, and credentials</td>
+</tr>
+<tr>
+<td>Contract</td>
+<td>Communicate through versioned APIs/events</td>
+</tr>
+<tr>
+<td>Failure</td>
+<td>One service failure does not terminate every process</td>
+</tr>
+<tr>
+<td>Change</td>
+<td>Internal implementation can change without editing every service</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="134-distributed-monolith-warning-signs">13.4 Distributed monolith warning signs<a class="headerlink" href="#134-distributed-monolith-warning-signs" title="Permanent link">#</a></h3>
+<p>The architecture must be corrected if:</p>
+<ul>
+<li>every service must always be deployed together;</li>
+<li>several services read or write the same database;</li>
+<li>domain packages are imported across services;</li>
+<li>events merely form a tightly coupled synchronous-style processing chain;</li>
+<li>breaking contracts are common and have no version or compatibility period;</li>
+<li>one user request makes a long synchronous chain across many services.</li>
+</ul>
+<h3 id="135-why-the-project-still-uses-a-monorepo">13.5 Why the project still uses a monorepo<a class="headerlink" href="#135-why-the-project-still-uses-a-monorepo" title="Permanent link">#</a></h3>
+<ul>
+<li>One primary developer can search, change contracts, and run the full system efficiently.</li>
+<li>Producer, schema, and consumer changes can be reviewed in one pull request.</li>
+<li>CI/CD and code ownership enforce runtime boundaries.</li>
+<li>A service can move to a separate repository later because it has no cross-service Go imports and already owns its <code>go.mod</code>, Dockerfile, and deployment definition.</li>
 </ul>
 <hr />
 <h2 id="14-initial-http-api-surface">14. Initial HTTP API Surface<a class="headerlink" href="#14-initial-http-api-surface" title="Permanent link">#</a></h2>
@@ -1855,6 +1964,11 @@ Do not invent source behavior or financial semantics.
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>0.1.1</td>
+<td>2026-09-30</td>
+<td>Expanded Section 13 to separate the source monorepo from runtime microservices and define independent build, deployment, data boundaries, and distributed-monolith warning signs</td>
+</tr>
 <tr>
 <td>0.1.0</td>
 <td>2026-09-30</td>
