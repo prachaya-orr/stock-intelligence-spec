@@ -1,8 +1,11 @@
 # Stock Intelligence Platform — Specification
 
-**Live site:** https://prachaya-orr.github.io/stock-intelligence-spec/
+**Live site:**
 
-This repo hosts the spec-driven development document for the Stock Intelligence Platform, published as a static HTML page. The spec covers the product, the domain and the software architecture.
+- English: https://prachaya-orr.github.io/stock-intelligence-spec/
+- ภาษาไทย (Thai): https://prachaya-orr.github.io/stock-intelligence-spec/th/
+
+This repo hosts the spec-driven development document for the Stock Intelligence Platform, published as static HTML pages in English and Thai. The spec covers the product, the domain and the software architecture. Each page has a link to switch to the other language.
 
 ## What the platform does
 
@@ -52,18 +55,21 @@ Core rules:
 
 | File | Purpose |
 |---|---|
-| `index.html` | Self-contained HTML rendering of the spec, served by GitHub Pages |
+| `index.html` | English HTML rendering of the spec, served by GitHub Pages |
+| `th/index.html` | Thai HTML rendering of the spec |
 | `.nojekyll` | Tells GitHub Pages to serve files as-is without Jekyll processing |
 
-Diagrams are rendered in the browser with [Mermaid](https://mermaid.js.org/), which is loaded from a CDN.
+Diagrams are rendered in the browser with [Mermaid](https://mermaid.js.org/), which is loaded from a CDN. The Thai page uses the Noto Sans Thai font from Google Fonts.
 
 ## Updating the site
 
-The Markdown source (`stock-intelligence-spec-driven-development.md`) is kept outside this repo. After regenerating the HTML from it:
+The Markdown sources (`stock-intelligence-spec-driven-development.md` and `stock-intelligence-spec-driven-development-th.md`) are kept outside this repo. After regenerating the HTML from them:
 
 ```bash
 cp ../stock-intelligence-spec-driven-development.html index.html
-git commit -am "Update spec"
+cp ../stock-intelligence-spec-driven-development-th.html th/index.html
+git add -A
+git commit -m "Update spec"
 git push
 ```
 
@@ -71,4 +77,4 @@ GitHub Pages redeploys from `main` automatically, usually within a minute.
 
 ## Status
 
-Version **0.1.0** is the baseline specification, dated 2026-09-30.
+Version **0.1.0** (English) and **0.1.0-th** (Thai) are the baseline specification, dated 2026-09-30.

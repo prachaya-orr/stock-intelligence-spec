@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stock Intelligence Platform — Spec-Driven Development</title>
+
 <style>
 :root {
   --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
@@ -33,11 +34,17 @@ nav.sidebar li { margin: 2px 0; }
 nav.sidebar a { color: var(--fg); text-decoration: none; display: block; padding: 2px 6px; border-radius: 4px; }
 nav.sidebar a:hover { background: var(--border); }
 main { margin-left: 300px; padding: 40px 56px 80px; max-width: 1100px; }
+.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.lang-switch a {
+  font-size: 14px; text-decoration: none; padding: 4px 12px;
+  border: 1px solid var(--border); border-radius: 999px; color: var(--fg);
+}
+.lang-switch a:hover { background: var(--code-bg); }
 @media (max-width: 900px) {
   nav.sidebar { display: none; }
   main { margin-left: 0; padding: 24px 20px; }
 }
-h1, h2, h3, h4 { line-height: 1.25; margin: 1.6em 0 .6em; }
+h1, h2, h3, h4 { line-height: 1.35; margin: 1.6em 0 .6em; }
 h1 { font-size: 2.2em; border-bottom: 1px solid var(--border); padding-bottom: .3em; margin-top: 0; }
 h2 { font-size: 1.6em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
 h3 { font-size: 1.25em; }
@@ -54,27 +61,11 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em;
   background: var(--code-bg); padding: .15em .4em; border-radius: 4px;
 }
-pre, .code pre {
+pre {
   background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
   padding: 14px 16px; overflow-x: auto; line-height: 1.45;
 }
 pre code { background: none; padding: 0; font-size: .85em; }
-.code { margin: 1em 0; }
-.code pre { margin: 0; font-size: .85em; }
-.code .k, .code .kd, .code .kt { color: #cf222e; }
-.code .s, .code .s2, .code .s1 { color: #0a3069; }
-.code .nf, .code .nx { color: #8250df; }
-.code .mi, .code .mf, .code .kc { color: #0550ae; }
-.code .nt { color: #116329; }
-.code .c, .code .c1, .code .cm { color: #6e7781; font-style: italic; }
-@media (prefers-color-scheme: dark) {
-  .code .k, .code .kd, .code .kt { color: #ff7b72; }
-  .code .s, .code .s2, .code .s1 { color: #a5d6ff; }
-  .code .nf, .code .nx { color: #d2a8ff; }
-  .code .mi, .code .mf, .code .kc { color: #79c0ff; }
-  .code .nt { color: #7ee787; }
-  .code .c, .code .c1, .code .cm { color: #8b949e; }
-}
 .table-wrap { overflow-x: auto; margin: 1em 0; }
 table { border-collapse: collapse; width: 100%; font-size: .92em; }
 th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
@@ -88,7 +79,7 @@ li.task input { margin-right: 6px; }
 }
 .diagram pre.mermaid { background: none; border: 0; padding: 0; margin: 0; }
 @media print {
-  nav.sidebar { display: none; }
+  nav.sidebar, .lang-switch { display: none; }
   main { margin: 0; max-width: none; padding: 0; }
   pre, .diagram, table { page-break-inside: avoid; }
 }
@@ -268,6 +259,7 @@ li.task input { margin-right: 6px; }
 
 </nav>
 <main>
+<div class="lang-switch"><a href="th/" hreflang="th">ภาษาไทย</a></div>
 <h1 id="stock-intelligence-platform">Stock Intelligence Platform<a class="headerlink" href="#stock-intelligence-platform" title="Permanent link">#</a></h1>
 <h2 id="spec-driven-development-product-domain-and-software-architecture-specification">Spec-Driven Development — Product, Domain and Software Architecture Specification<a class="headerlink" href="#spec-driven-development-product-domain-and-software-architecture-specification" title="Permanent link">#</a></h2>
 <blockquote>

@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock Intelligence Platform — ข้อกำหนด Spec-Driven Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+  --code-bg: #f6f8fa; --accent: #0969da; --sidebar-bg: #f6f8fa; --quote: #0969da;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #30363d;
+    --code-bg: #161b22; --accent: #4493f8; --sidebar-bg: #010409; --quote: #4493f8;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.75 "Noto Sans Thai", -apple-system, BlinkMacSystemFont, "Segoe UI", Thonburi, sans-serif;
+}
+nav.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 300px; overflow-y: auto;
+  padding: 24px 16px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+  font-size: 14px;
+}
+nav.sidebar h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+nav.sidebar ul { list-style: none; padding-left: 0; margin: 0; }
+nav.sidebar ul ul { padding-left: 14px; }
+nav.sidebar li { margin: 2px 0; }
+nav.sidebar a { color: var(--fg); text-decoration: none; display: block; padding: 2px 6px; border-radius: 4px; }
+nav.sidebar a:hover { background: var(--border); }
+main { margin-left: 300px; padding: 40px 56px 80px; max-width: 1100px; }
+.lang-switch { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.lang-switch a {
+  font-size: 14px; text-decoration: none; padding: 4px 12px;
+  border: 1px solid var(--border); border-radius: 999px; color: var(--fg);
+}
+.lang-switch a:hover { background: var(--code-bg); }
+@media (max-width: 900px) {
+  nav.sidebar { display: none; }
+  main { margin-left: 0; padding: 24px 20px; }
+}
+h1, h2, h3, h4 { line-height: 1.35; margin: 1.6em 0 .6em; }
+h1 { font-size: 2.2em; border-bottom: 1px solid var(--border); padding-bottom: .3em; margin-top: 0; }
+h2 { font-size: 1.6em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
+h3 { font-size: 1.25em; }
+a { color: var(--accent); }
+.headerlink { opacity: 0; margin-left: 6px; text-decoration: none; font-weight: normal; }
+h1:hover .headerlink, h2:hover .headerlink, h3:hover .headerlink { opacity: .6; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
+blockquote {
+  margin: 1em 0; padding: .6em 1em; border-left: 4px solid var(--quote);
+  background: var(--code-bg); border-radius: 0 6px 6px 0; color: var(--fg);
+}
+blockquote p { margin: 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em;
+  background: var(--code-bg); padding: .15em .4em; border-radius: 4px;
+}
+pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 14px 16px; overflow-x: auto; line-height: 1.45;
+}
+pre code { background: none; padding: 0; font-size: .85em; }
+.table-wrap { overflow-x: auto; margin: 1em 0; }
+table { border-collapse: collapse; width: 100%; font-size: .92em; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--code-bg); font-weight: 600; }
+tr:nth-child(even) td { background: color-mix(in srgb, var(--code-bg) 50%, transparent); }
+li.task { list-style: none; margin-left: -1.3em; }
+li.task input { margin-right: 6px; }
+.diagram {
+  margin: 1.2em 0; padding: 16px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); overflow-x: auto; text-align: center;
+}
+.diagram pre.mermaid { background: none; border: 0; padding: 0; margin: 0; }
+@media print {
+  nav.sidebar, .lang-switch { display: none; }
+  main { margin: 0; max-width: none; padding: 0; }
+  pre, .diagram, table { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+<h2>สารบัญ</h2>
+<div class="toc">
+<ul>
+<li><a href="#ขอกำหนดการพฒนาแบบ-spec-driven-development">ข้อกำหนดการพัฒนาแบบ Spec-Driven Development</a></li>
+<li><a href="#0-วธใชเอกสารน">0. วิธีใช้เอกสารนี้</a></li>
+<li><a href="#1-บรบทของโครงการ">1. บริบทของโครงการ</a><ul>
+<li><a href="#11-บรบทของเจาของผลตภณฑและผพฒนา">1.1 บริบทของเจ้าของผลิตภัณฑ์และผู้พัฒนา</a></li>
+<li><a href="#12-วสยทศนผลตภณฑ">1.2 วิสัยทัศน์ผลิตภัณฑ์</a></li>
+<li><a href="#13-คำถามหลกทระบบตองตอบได">1.3 คำถามหลักที่ระบบต้องตอบได้</a></li>
+<li><a href="#14-use-case-เรมตน">1.4 Use Case เริ่มต้น</a></li>
+</ul>
+</li>
+<li><a href="#2-หลกการของผลตภณฑ">2. หลักการของผลิตภัณฑ์</a><ul>
+<li><a href="#p-001-หลกฐานมากอนคำอธบาย">P-001 — หลักฐานมาก่อนคำอธิบาย</a></li>
+<li><a href="#p-002-คำนวณตวเลขดวยโคด">P-002 — คำนวณตัวเลขด้วยโค้ด</a></li>
+<li><a href="#p-003-ขอเทจจรงและการตความเปนคนละ-record">P-003 — ข้อเท็จจริงและการตีความเป็นคนละ Record</a></li>
+<li><a href="#p-004-แตละ-domain-เปนเจาของขอมลของตวเอง">P-004 — แต่ละ Domain เป็นเจ้าของข้อมูลของตัวเอง</a></li>
+<li><a href="#p-005-แจงเตอนเฉพาะขอมลทมความหมาย">P-005 — แจ้งเตือนเฉพาะข้อมูลที่มีความหมาย</a></li>
+<li><a href="#p-006-ตรวจสอบยอนหลงได">P-006 — ตรวจสอบย้อนหลังได้</a></li>
+<li><a href="#p-007-เปลยน-infrastructure-ได">P-007 — เปลี่ยน Infrastructure ได้</a></li>
+</ul>
+</li>
+<li><a href="#3-ขอบเขตผลตภณฑ">3. ขอบเขตผลิตภัณฑ์</a><ul>
+<li><a href="#31-ขอบเขต-mvp">3.1 ขอบเขต MVP</a></li>
+<li><a href="#32-ขอบเขตหลง-mvp">3.2 ขอบเขตหลัง MVP</a></li>
+<li><a href="#33-สงทไมรวมใน-mvp">3.3 สิ่งที่ไม่รวมใน MVP</a></li>
+</ul>
+</li>
+<li><a href="#4-ภาพรวมระบบ">4. ภาพรวมระบบ</a></li>
+<li><a href="#5-การตดสนใจดานสถาปตยกรรม">5. การตัดสินใจด้านสถาปัตยกรรม</a><ul>
+<li><a href="#51-สถาปตยกรรมทเลอก">5.1 สถาปัตยกรรมที่เลือก</a></li>
+<li><a href="#52-เหตผลทเลอก">5.2 เหตุผลที่เลือก</a></li>
+<li><a href="#53-ขอจำกดทางสถาปตยกรรม">5.3 ข้อจำกัดทางสถาปัตยกรรม</a></li>
+</ul>
+</li>
+<li><a href="#6-ขอบเขต-microservices">6. ขอบเขต Microservices</a><ul>
+<li><a href="#61-สงทตงใจไมแยกเปน-service">6.1 สิ่งที่ตั้งใจไม่แยกเป็น Service</a></li>
+</ul>
+</li>
+<li><a href="#7-การสอสารระหวาง-service">7. การสื่อสารระหว่าง Service</a><ul>
+<li><a href="#71-synchronous-communication">7.1 Synchronous Communication</a></li>
+<li><a href="#72-asynchronous-communication">7.2 Asynchronous Communication</a></li>
+<li><a href="#73-event-envelope">7.3 Event Envelope</a></li>
+<li><a href="#74-event-catalogue-เรมตน">7.4 Event Catalogue เริ่มต้น</a></li>
+<li><a href="#75-ขอกำหนดของ-messaging">7.5 ข้อกำหนดของ Messaging</a></li>
+</ul>
+</li>
+<li><a href="#8-data-ownership-และ-storage">8. Data Ownership และ Storage</a><ul>
+<li><a href="#81-storage-ทเลอก">8.1 Storage ที่เลือก</a></li>
+<li><a href="#82-database-ownership">8.2 Database Ownership</a></li>
+<li><a href="#83-ความแมนยำของตวเลข">8.3 ความแม่นยำของตัวเลข</a></li>
+</ul>
+</li>
+<li><a href="#9-core-domain-model">9. Core Domain Model</a><ul>
+<li><a href="#91-company-master">9.1 Company Master</a></li>
+<li><a href="#92-source-และ-evidence">9.2 Source และ Evidence</a></li>
+<li><a href="#93-financial-fact">9.3 Financial Fact</a></li>
+<li><a href="#94-metric-calculation">9.4 Metric Calculation</a></li>
+<li><a href="#95-investment-thesis">9.5 Investment Thesis</a></li>
+<li><a href="#96-analysis-claim">9.6 Analysis Claim</a></li>
+</ul>
+</li>
+<li><a href="#10-กฎการคำนวณทางการเงน">10. กฎการคำนวณทางการเงิน</a><ul>
+<li><a href="#101-metric-เรมตน">10.1 Metric เริ่มต้น</a></li>
+<li><a href="#102-ขอกำหนดของการคำนวณ">10.2 ข้อกำหนดของการคำนวณ</a></li>
+<li><a href="#103-restatement">10.3 Restatement</a></li>
+</ul>
+</li>
+<li><a href="#11-ขอกำหนด-ai-analyst">11. ข้อกำหนด AI Analyst</a><ul>
+<li><a href="#111-หนาทททำได">11.1 หน้าที่ที่ทำได้</a></li>
+<li><a href="#112-หนาททหามทำ">11.2 หน้าที่ที่ห้ามทำ</a></li>
+<li><a href="#113-accuracy-first-6-checks">11.3 Accuracy First 6 Checks</a></li>
+<li><a href="#114-ai-output-contract">11.4 AI Output Contract</a></li>
+</ul>
+</li>
+<li><a href="#12-สถาปตยกรรมภายใน-go-service">12. สถาปัตยกรรมภายใน Go Service</a><ul>
+<li><a href="#121-pattern-ทเลอก">12.1 Pattern ที่เลือก</a></li>
+<li><a href="#122-ทศทาง-dependency">12.2 ทิศทาง Dependency</a></li>
+<li><a href="#123-clean-code-clean-architecture-และ-ports-adapters">12.3 Clean Code, Clean Architecture และ Ports &amp; Adapters</a></li>
+<li><a href="#124-ตวอยางโครงสราง-service">12.4 ตัวอย่างโครงสร้าง Service</a></li>
+<li><a href="#125-กฎการเขยน-go">12.5 กฎการเขียน Go</a></li>
+</ul>
+</li>
+<li><a href="#13-โครงสราง-repository">13. โครงสร้าง Repository</a><ul>
+<li><a href="#131-module-policy">13.1 Module Policy</a></li>
+</ul>
+</li>
+<li><a href="#14-http-api-เรมตน">14. HTTP API เริ่มต้น</a><ul>
+<li><a href="#141-company-และ-watchlist">14.1 Company และ Watchlist</a></li>
+<li><a href="#142-document-และ-evidence">14.2 Document และ Evidence</a></li>
+<li><a href="#143-financial-และ-valuation">14.3 Financial และ Valuation</a></li>
+<li><a href="#144-thesis-และ-alert">14.4 Thesis และ Alert</a></li>
+<li><a href="#145-api-convention">14.5 API Convention</a></li>
+</ul>
+</li>
+<li><a href="#15-source-collection-pipeline">15. Source Collection Pipeline</a><ul>
+<li><a href="#151-processing-stage">15.1 Processing Stage</a></li>
+<li><a href="#152-source-adapter-contract">15.2 Source Adapter Contract</a></li>
+<li><a href="#153-ขอกำหนด-collection">15.3 ข้อกำหนด Collection</a></li>
+</ul>
+</li>
+<li><a href="#16-thesis-impact-engine">16. Thesis Impact Engine</a><ul>
+<li><a href="#161-ประเภท-trigger">16.1 ประเภท Trigger</a></li>
+<li><a href="#162-materiality">16.2 Materiality</a></li>
+</ul>
+</li>
+<li><a href="#17-alert-contract">17. Alert Contract</a></li>
+<li><a href="#18-security-และ-privacy">18. Security และ Privacy</a></li>
+<li><a href="#19-reliability-และ-non-functional-requirements">19. Reliability และ Non-functional Requirements</a><ul>
+<li><a href="#191-service-objective-เรมตน">19.1 Service Objective เริ่มต้น</a></li>
+<li><a href="#192-resilience">19.2 Resilience</a></li>
+</ul>
+</li>
+<li><a href="#20-observability">20. Observability</a><ul>
+<li><a href="#201-signal-ทตองม">20.1 Signal ที่ต้องมี</a></li>
+<li><a href="#202-identifier-ทตองสงตอ">20.2 Identifier ที่ต้องส่งต่อ</a></li>
+<li><a href="#203-operational-metric-หลก">20.3 Operational Metric หลัก</a></li>
+</ul>
+</li>
+<li><a href="#21-testing-strategy">21. Testing Strategy</a><ul>
+<li><a href="#211-domain-unit-test">21.1 Domain Unit Test</a></li>
+<li><a href="#212-adapter-integration-test">21.2 Adapter Integration Test</a></li>
+<li><a href="#213-contract-test">21.3 Contract Test</a></li>
+<li><a href="#214-end-to-end-golden-path">21.4 End-to-end Golden Path</a></li>
+<li><a href="#215-ai-evaluation">21.5 AI Evaluation</a></li>
+</ul>
+</li>
+<li><a href="#22-deployment-model">22. Deployment Model</a><ul>
+<li><a href="#221-local-development">22.1 Local Development</a></li>
+<li><a href="#222-production-evolution">22.2 Production Evolution</a></li>
+<li><a href="#223-cicd">22.3 CI/CD</a></li>
+</ul>
+</li>
+<li><a href="#23-spec-driven-development-workflow">23. Spec-Driven Development Workflow</a><ul>
+<li><a href="#231-artifact-ทตองม">23.1 Artifact ที่ต้องมี</a></li>
+<li><a href="#232-ขนตอนการเปลยนแปลง">23.2 ขั้นตอนการเปลี่ยนแปลง</a></li>
+<li><a href="#233-requirement-template">23.3 Requirement Template</a></li>
+<li><a href="#234-architecture-decision-record-template">23.4 Architecture Decision Record Template</a></li>
+<li><a href="#235-กฎสำหรบ-ai-coding-agent">23.5 กฎสำหรับ AI Coding Agent</a></li>
+</ul>
+</li>
+<li><a href="#24-initial-requirements-และ-acceptance-criteria">24. Initial Requirements และ Acceptance Criteria</a><ul>
+<li><a href="#req-001-เกบ-official-source-document">REQ-001 — เก็บ Official Source Document</a></li>
+<li><a href="#req-002-extract-financial-fact-ทยอนกลบไปหาหลกฐานได">REQ-002 — Extract Financial Fact ที่ย้อนกลับไปหาหลักฐานได้</a></li>
+<li><a href="#req-003-verify-และ-version-financial-fact">REQ-003 — Verify และ Version Financial Fact</a></li>
+<li><a href="#req-004-คำนวณ-metric-ททำซำได">REQ-004 — คำนวณ Metric ที่ทำซ้ำได้</a></li>
+<li><a href="#req-005-ตรวจ-thesis-impact">REQ-005 — ตรวจ Thesis Impact</a></li>
+<li><a href="#req-006-สรางคำอธบายทมหลกฐาน">REQ-006 — สร้างคำอธิบายที่มีหลักฐาน</a></li>
+<li><a href="#req-007-สง-material-alert-หนงครง">REQ-007 — ส่ง Material Alert หนึ่งครั้ง</a></li>
+</ul>
+</li>
+<li><a href="#25-delivery-roadmap">25. Delivery Roadmap</a><ul>
+<li><a href="#phase-0-foundation">Phase 0 — Foundation</a></li>
+<li><a href="#phase-1-evidence-vertical-slice">Phase 1 — Evidence Vertical Slice</a></li>
+<li><a href="#phase-2-financial-intelligence">Phase 2 — Financial Intelligence</a></li>
+<li><a href="#phase-3-thesis-monitoring">Phase 3 — Thesis Monitoring</a></li>
+<li><a href="#phase-4-ai-analyst">Phase 4 — AI Analyst</a></li>
+<li><a href="#phase-5-market-data-และ-scaling">Phase 5 — Market Data และ Scaling</a></li>
+</ul>
+</li>
+<li><a href="#26-สรป-architecture-decision-ทยอมรบแลว">26. สรุป Architecture Decision ที่ยอมรับแล้ว</a></li>
+<li><a href="#27-คำถามทยงเปดและ-working-default">27. คำถามที่ยังเปิดและ Working Default</a></li>
+<li><a href="#28-definition-of-done">28. Definition of Done</a></li>
+<li><a href="#29-งานแรกทแนะนำ">29. งานแรกที่แนะนำ</a></li>
+<li><a href="#30-prompt-สำหรบกบรบทใน-session-ใหม">30. Prompt สำหรับกู้บริบทใน Session ใหม่</a></li>
+<li><a href="#31-glossary">31. Glossary</a></li>
+<li><a href="#32-revision-log">32. Revision Log</a></li>
+</ul>
+</div>
+
+</nav>
+<main>
+<div class="lang-switch"><a href="../" hreflang="en">English</a></div>
+<h1 id="stock-intelligence-platform">Stock Intelligence Platform<a class="headerlink" href="#stock-intelligence-platform" title="Permanent link">#</a></h1>
+<h2 id="ขอกำหนดการพฒนาแบบ-spec-driven-development">ข้อกำหนดการพัฒนาแบบ Spec-Driven Development<a class="headerlink" href="#ขอกำหนดการพฒนาแบบ-spec-driven-development" title="Permanent link">#</a></h2>
+<blockquote>
+<p><strong>สถานะเอกสาร:</strong> ข้อกำหนดฉบับตั้งต้น<br />
+<strong>เวอร์ชัน:</strong> 0.1.0-th<br />
+<strong>วันที่จัดทำ:</strong> 30 กันยายน 2026<br />
+<strong>ภาษาหลักของ Backend:</strong> Go<br />
+<strong>Frontend:</strong> Next.js + TypeScript<br />
+<strong>สถาปัตยกรรม:</strong> Microservices + Event-driven + Pragmatic Ports &amp; Adapters<br />
+<strong>ตลาดหลัก:</strong> ประเทศไทย / หลักทรัพย์จดทะเบียนใน SET</p>
+</blockquote>
+<hr />
+<h2 id="0-วธใชเอกสารน">0. วิธีใช้เอกสารนี้<a class="headerlink" href="#0-วธใชเอกสารน" title="Permanent link">#</a></h2>
+<p>ไฟล์นี้เป็นแหล่งอ้างอิงหลักสำหรับผลิตภัณฑ์และสถาปัตยกรรมของระบบ</p>
+<p>ก่อนพัฒนาฟีเจอร์ ผู้พัฒนาหรือ AI coding agent ต้อง:</p>
+<ol>
+<li>อ่านเอกสารนี้ให้ครบ</li>
+<li>ระบุ Bounded Context และ Service ที่เป็นเจ้าของฟีเจอร์</li>
+<li>แก้ Requirement, Acceptance Criteria, API/Event Schema หรือ ADR ก่อนแก้โค้ด หากพฤติกรรมของระบบเปลี่ยน</li>
+<li>รักษาหลัก Data Ownership และทิศทาง Dependency</li>
+<li>คำนวณตัวเลขทางการเงินด้วยโค้ดที่ให้ผลแน่นอน</li>
+<li>เก็บ Evidence Lineage ของข้อเท็จจริงและผลคำนวณทุกตัว</li>
+<li>รันการทดสอบที่กำหนด และปรับเอกสารนี้เมื่อการตัดสินใจเปลี่ยน</li>
+</ol>
+<p>ข้อกำหนดนี้แยกข้อมูลออกเป็น:</p>
+<ul>
+<li><strong>FACT:</strong> ข้อเท็จจริงที่มีหลักฐานโดยตรงจากแหล่งข้อมูล</li>
+<li><strong>INFERENCE:</strong> ข้อสรุปที่อนุมานจากข้อเท็จจริง</li>
+<li><strong>HYPOTHESIS:</strong> คำอธิบายที่เป็นไปได้ แต่ยังต้องหาหลักฐานเพิ่ม</li>
+<li><strong>CALCULATION:</strong> ผลลัพธ์ที่คำนวณจาก Input ที่ระบุได้และสูตรที่มี Version</li>
+</ul>
+<hr />
+<h2 id="1-บรบทของโครงการ">1. บริบทของโครงการ<a class="headerlink" href="#1-บรบทของโครงการ" title="Permanent link">#</a></h2>
+<h3 id="11-บรบทของเจาของผลตภณฑและผพฒนา">1.1 บริบทของเจ้าของผลิตภัณฑ์และผู้พัฒนา<a class="headerlink" href="#11-บรบทของเจาของผลตภณฑและผพฒนา" title="Permanent link">#</a></h3>
+<p>ผู้พัฒนาหลักมีพื้นฐานดังนี้:</p>
+<ul>
+<li>มีประสบการณ์ Software Engineering ประมาณ 4 ปี</li>
+<li>ใช้งาน JavaScript, TypeScript และ Go</li>
+<li>คุ้นเคยกับ Redis, Kafka, API, Testing, Distributed Systems และ Microservices</li>
+<li>จบ Mechanical Engineering</li>
+<li>สนใจการวิเคราะห์หุ้น Financial Engineering, AI Infrastructure, Data Center และพลังงาน</li>
+<li>ต้องการสร้าง Portfolio Project ที่ใช้สมัครงาน Go Backend, FinTech, AI Platform และ Data Platform ได้</li>
+</ul>
+<p>ระบบจึงควรแสดงความสามารถต่อไปนี้:</p>
+<ul>
+<li>การเขียน Go ที่สอดคล้องกับแนวทางของภาษา</li>
+<li>การแบ่ง Domain Boundary อย่างชัดเจน</li>
+<li>Event-driven processing</li>
+<li>การคำนวณตัวเลขที่เชื่อถือและตรวจซ้ำได้</li>
+<li>การย้อนกลับไปหาแหล่งข้อมูลต้นทาง</li>
+<li>AI Integration ที่มีระบบตรวจสอบ</li>
+<li>Observability และ Deployment ที่พร้อมต่อยอดสู่ Production</li>
+</ul>
+<h3 id="12-วสยทศนผลตภณฑ">1.2 วิสัยทัศน์ผลิตภัณฑ์<a class="headerlink" href="#12-วสยทศนผลตภณฑ" title="Permanent link">#</a></h3>
+<p>สร้าง Stock Intelligence Platform ที่ติดตามข้อมูลบริษัทจากแหล่งปฐมภูมิอย่างต่อเนื่อง แปลงเอกสารเป็นข้อเท็จจริงที่มีหลักฐาน คำนวณตัวชี้วัดทางการเงินใหม่ เชื่อมการเปลี่ยนแปลงเข้ากับ Investment Thesis และแจ้งเตือนเมื่อข้อมูลใหม่อาจเปลี่ยนสมมติฐานอย่างมีนัยสำคัญ</p>
+<h3 id="13-คำถามหลกทระบบตองตอบได">1.3 คำถามหลักที่ระบบต้องตอบได้<a class="headerlink" href="#13-คำถามหลกทระบบตองตอบได" title="Permanent link">#</a></h3>
+<ol>
+<li><strong>อะไรเปลี่ยนไป?</strong></li>
+<li><strong>แหล่งข้อมูลใดยืนยันการเปลี่ยนแปลงนั้น?</strong></li>
+<li><strong>ตัวเลขหรือสมมติฐานข้อใดได้รับผลกระทบ?</strong></li>
+<li><strong>เหตุใดการเปลี่ยนแปลงนี้จึงอาจสำคัญ?</strong></li>
+<li><strong>ระบบมั่นใจเพียงใด?</strong></li>
+<li><strong>ยังมีประเด็นใดที่ตรวจสอบไม่ได้?</strong></li>
+</ol>
+<h3 id="14-use-case-เรมตน">1.4 Use Case เริ่มต้น<a class="headerlink" href="#14-use-case-เรมตน" title="Permanent link">#</a></h3>
+<ul>
+<li>ติดตาม SET filings, SEC filings, Company IR, Presentation และข้อมูลตลาดที่เลือกใช้</li>
+<li>รองรับหุ้นตัวอย่าง เช่น STPI, CCET, BGRIM, SPCG, KCE, HANA และ GUNKUL โดยไม่ผูกระบบกับรายชื่อเหล่านี้</li>
+<li>ตรวจจับการเปลี่ยนแปลงด้านลูกค้า กำลังการผลิต Utilization, CAPEX, รายได้ Margin, EPS, Cash Flow, ความเสี่ยง Catalyst และสมมติฐาน Valuation</li>
+<li>เก็บ Investment Thesis ที่มี Driver, Assumption, Risk, Catalyst, Evidence และ Invalidation Trigger ชัดเจน</li>
+<li>สร้าง Alert ที่แยก FACT, CALCULATION, INFERENCE และ HYPOTHESIS</li>
+</ul>
+<hr />
+<h2 id="2-หลกการของผลตภณฑ">2. หลักการของผลิตภัณฑ์<a class="headerlink" href="#2-หลกการของผลตภณฑ" title="Permanent link">#</a></h2>
+<h3 id="p-001-หลกฐานมากอนคำอธบาย">P-001 — หลักฐานมาก่อนคำอธิบาย<a class="headerlink" href="#p-001-หลกฐานมากอนคำอธบาย" title="Permanent link">#</a></h3>
+<p>ข้อกล่าวอ้างที่มีนัยสำคัญต้องเชื่อมกลับไปยัง Primary Source เมื่อมีแหล่งดังกล่าว Metadata ของแหล่งข้อมูลต้องมี URL, เวลาที่ดึงข้อมูล, เวลาที่เผยแพร่ถ้ามี, Document Hash และตำแหน่งในเอกสาร เช่น หน้า ตาราง แถว หรือ Text Span</p>
+<h3 id="p-002-คำนวณตวเลขดวยโคด">P-002 — คำนวณตัวเลขด้วยโค้ด<a class="headerlink" href="#p-002-คำนวณตวเลขดวยโคด" title="Permanent link">#</a></h3>
+<p>ตัวเลขทางการเงินต้องคำนวณด้วยโค้ดที่มี Version ห้ามมอบหมายให้ LLM เป็นผู้คำนวณค่าที่ถือเป็นข้อมูลทางการ ระบบต้องเก็บ Input, หน่วย, งวด, สกุลเงิน, Formula Version และ Output</p>
+<h3 id="p-003-ขอเทจจรงและการตความเปนคนละ-record">P-003 — ข้อเท็จจริงและการตีความเป็นคนละ Record<a class="headerlink" href="#p-003-ขอเทจจรงและการตความเปนคนละ-record" title="Permanent link">#</a></h3>
+<p>Fact ที่ดึงมาจากเอกสารและ Analyst Interpretation ต้องไม่ถูกเก็บเป็น Entity เดียวกัน การแก้ Inference ต้องไม่แก้ Fact ที่รองรับอยู่</p>
+<h3 id="p-004-แตละ-domain-เปนเจาของขอมลของตวเอง">P-004 — แต่ละ Domain เป็นเจ้าของข้อมูลของตัวเอง<a class="headerlink" href="#p-004-แตละ-domain-เปนเจาของขอมลของตวเอง" title="Permanent link">#</a></h3>
+<p>Microservice แต่ละตัวเขียนได้เฉพาะ Database ของตัวเอง Service อื่นต้องอ่านผ่าน API หรือ Event ที่เจ้าของข้อมูลเผยแพร่</p>
+<h3 id="p-005-แจงเตอนเฉพาะขอมลทมความหมาย">P-005 — แจ้งเตือนเฉพาะข้อมูลที่มีความหมาย<a class="headerlink" href="#p-005-แจงเตอนเฉพาะขอมลทมความหมาย" title="Permanent link">#</a></h3>
+<p>ระบบควรแจ้งเมื่อเข้า Threshold, Thesis Trigger หรือ Materiality Rule ที่กำหนด การมีเอกสารใหม่เพียงอย่างเดียวไม่ควรทำให้ผู้ใช้ได้รับ Notification เสมอไป</p>
+<h3 id="p-006-ตรวจสอบยอนหลงได">P-006 — ตรวจสอบย้อนหลังได้<a class="headerlink" href="#p-006-ตรวจสอบยอนหลงได" title="Permanent link">#</a></h3>
+<p>ทุกการ Extract, Correct, Calculate, Thesis Impact, AI Analysis และ Notification ต้องมี Audit Trail</p>
+<h3 id="p-007-เปลยน-infrastructure-ได">P-007 — เปลี่ยน Infrastructure ได้<a class="headerlink" href="#p-007-เปลยน-infrastructure-ได" title="Permanent link">#</a></h3>
+<p>Business Rule ต้องไม่ผูกกับ PostgreSQL, Kafka, HTTP Framework, LLM Provider หรือ Notification Channel รายใดรายหนึ่งโดยตรง</p>
+<hr />
+<h2 id="3-ขอบเขตผลตภณฑ">3. ขอบเขตผลิตภัณฑ์<a class="headerlink" href="#3-ขอบเขตผลตภณฑ" title="Permanent link">#</a></h2>
+<h3 id="31-ขอบเขต-mvp">3.1 ขอบเขต MVP<a class="headerlink" href="#31-ขอบเขต-mvp" title="Permanent link">#</a></h3>
+<ul>
+<li>Authentication ผ่านผู้ให้บริการที่รองรับ OIDC</li>
+<li>Company และ Security Master Data</li>
+<li>Watchlist</li>
+<li>Scheduled Collection จาก Official Source ที่เลือก</li>
+<li>จัดเก็บ Raw Document และ Deduplication</li>
+<li>อ่าน PDF, HTML และ XLSX</li>
+<li>Extract Financial Fact พร้อมสถานะการตรวจสอบ</li>
+<li>คำนวณ Metric ด้วยโค้ด</li>
+<li>สร้างและแก้ไข Thesis</li>
+<li>ตรวจ Thesis Impact ด้วยกฎ</li>
+<li>AI Explanation ที่อ้างอิงหลักฐาน</li>
+<li>In-app Notification และ External Channel อย่างน้อยหนึ่งช่องทาง</li>
+<li>Dashboard สำหรับ Document, Fact, Metric, Thesis, Alert และ Citation</li>
+</ul>
+<h3 id="32-ขอบเขตหลง-mvp">3.2 ขอบเขตหลัง MVP<a class="headerlink" href="#32-ขอบเขตหลง-mvp" title="Permanent link">#</a></h3>
+<ul>
+<li>Intraday และข้อมูลตลาดความถี่สูงขึ้น</li>
+<li>Portfolio Construction และ Risk Analytics</li>
+<li>Backtesting</li>
+<li>Collaborative Research Workspace</li>
+<li>Subscription และแผนคิดค่าบริการ API</li>
+<li>ตลาดต่างประเทศ</li>
+<li>Model Evaluation และ Human Feedback Loop ขั้นสูง</li>
+</ul>
+<h3 id="33-สงทไมรวมใน-mvp">3.3 สิ่งที่ไม่รวมใน MVP<a class="headerlink" href="#33-สงทไมรวมใน-mvp" title="Permanent link">#</a></h3>
+<ul>
+<li>Automated Trade Execution</li>
+<li>การเก็บรักษาเงินหรือหลักทรัพย์</li>
+<li>คำแนะนำซื้อขายที่รับประกันผลตอบแทน</li>
+<li>งบการเงินที่ AI สร้างขึ้นโดยไม่ผ่านการตรวจ</li>
+<li>Ultra-low-latency Trading Infrastructure</li>
+<li>ระบบข้อมูลทั่วไปขนาดเทียบเท่า Bloomberg หรือ Refinitiv</li>
+</ul>
+<hr />
+<h2 id="4-ภาพรวมระบบ">4. ภาพรวมระบบ<a class="headerlink" href="#4-ภาพรวมระบบ" title="Permanent link">#</a></h2>
+<div class="diagram"><pre class="mermaid">flowchart TB
+    USER[Investor / Analyst] --&gt; WEB[Next.js Web Application]
+    WEB --&gt; GW[API Gateway / BFF]
+
+    subgraph Platform[Stock Intelligence Platform]
+        GW --&gt; MASTER[Company Master]
+        GW --&gt; FUND[Fundamentals]
+        GW --&gt; RESEARCH[Research and Thesis]
+        GW --&gt; ALERT[Alert]
+
+        INGEST[Ingestion] --&gt; DOC[Document Intelligence]
+        DOC --&gt; FUND
+        FUND --&gt; METRIC[Metric and Valuation]
+        MARKET[Market Data] --&gt; METRIC
+        METRIC --&gt; RESEARCH
+        RESEARCH --&gt; AI[AI Analyst]
+        AI --&gt; ALERT
+    end
+
+    SET[SET / SEC] --&gt; INGEST
+    IR[Company IR] --&gt; INGEST
+    PROVIDER[Market Data Provider] --&gt; MARKET
+    ALERT --&gt; CHANNEL[LINE / Telegram / Email]
+</pre></div>
+<hr />
+<h2 id="5-การตดสนใจดานสถาปตยกรรม">5. การตัดสินใจด้านสถาปัตยกรรม<a class="headerlink" href="#5-การตดสนใจดานสถาปตยกรรม" title="Permanent link">#</a></h2>
+<h3 id="51-สถาปตยกรรมทเลอก">5.1 สถาปัตยกรรมที่เลือก<a class="headerlink" href="#51-สถาปตยกรรมทเลอก" title="Permanent link">#</a></h3>
+<ul>
+<li>แบ่ง Microservices ตาม Bounded Context</li>
+<li>ใช้ Event-driven Communication สำหรับการกระจาย State Change</li>
+<li>ใช้ REST หรือ gRPC สำหรับ Query และ Command ที่ต้องรอคำตอบทันที</li>
+<li>ใช้ Pragmatic Ports &amp; Adapters ภายใน Go Service</li>
+<li>ใช้ DDD เฉพาะ Domain ที่มีความซับซ้อนเพียงพอ</li>
+<li>Service เป็นเจ้าของ Database ของตัวเอง</li>
+<li>ใช้ Transactional Outbox เพื่อ Publish Event อย่างเชื่อถือได้</li>
+<li>ใช้ OpenAPI สำหรับ HTTP Contract</li>
+<li>ใช้ AsyncAPI และ JSON Schema สำหรับ Event Contract</li>
+<li>Backend Service แต่ละตัว Build และ Deploy ได้อย่างอิสระ</li>
+<li>เก็บหลาย Go Modules ใน Monorepo และใช้ <code>go.work</code> ที่ Root สำหรับ Local Development</li>
+</ul>
+<h3 id="52-เหตผลทเลอก">5.2 เหตุผลที่เลือก<a class="headerlink" href="#52-เหตผลทเลอก" title="Permanent link">#</a></h3>
+<p>โครงการมีงานหลายชนิดที่มี Load และรอบการเปลี่ยนแปลงต่างกัน:</p>
+<ul>
+<li>Source Collection เป็นงาน I/O สูง</li>
+<li>Parsing และ AI Extraction ใช้ Compute สูง</li>
+<li>Market Data เป็น Time-series</li>
+<li>Financial Metrics ต้องใช้ Domain Rule ที่ให้ผลแน่นอน</li>
+<li>Research และ Thesis มีความสัมพันธ์และ Audit History ซับซ้อน</li>
+<li>Notification ต้องจัดการ Retry และพฤติกรรมเฉพาะแต่ละ Channel</li>
+</ul>
+<p>ขอบเขตเหล่านี้เหมาะกับการแยก Service โดยยังรักษาโครงสร้างภายในแต่ละ Service ให้เรียบง่าย</p>
+<h3 id="53-ขอจำกดทางสถาปตยกรรม">5.3 ข้อจำกัดทางสถาปัตยกรรม<a class="headerlink" href="#53-ขอจำกดทางสถาปตยกรรม" title="Permanent link">#</a></h3>
+<ul>
+<li>Service ห้าม Query ตารางของ Service อื่นโดยตรง</li>
+<li>ห้ามแชร์ Domain Model ข้าม Service</li>
+<li>Shared Contract Package มีได้เฉพาะ Generated Transport Type ไม่ใช่ Business Entity ร่วมกัน</li>
+<li>Event ที่ Publish แล้วแก้ไขไม่ได้</li>
+<li>Breaking Change ต้องออก Event หรือ API Version ใหม่</li>
+<li>ห้ามทำ Distributed Transaction ให้ใช้ Local Transaction, Outbox, Idempotency และ Compensating Action</li>
+</ul>
+<hr />
+<h2 id="6-ขอบเขต-microservices">6. ขอบเขต Microservices<a class="headerlink" href="#6-ขอบเขต-microservices" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>หน้าที่</th>
+<th>ข้อมูลที่เป็นเจ้าของ</th>
+<th>Output หลัก</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api-gateway</code></td>
+<td>Authentication enforcement, Routing, Response aggregation และ WebSocket/SSE</td>
+<td>ไม่มี Business Record</td>
+<td>Public HTTP API</td>
+</tr>
+<tr>
+<td><code>company-master</code></td>
+<td>บริษัท หลักทรัพย์ ตลาด อุตสาหกรรม Symbol History และ Identity Mapping</td>
+<td>Company, Security, Listing</td>
+<td>Company API และ Master-data Event</td>
+</tr>
+<tr>
+<td><code>ingestion</code></td>
+<td>Schedule, Source Adapter, Collection, Hash, Deduplication และ Raw Document Registration</td>
+<td>Source, CollectionJob, RawDocument</td>
+<td><code>DocumentCollected</code></td>
+</tr>
+<tr>
+<td><code>document-intelligence</code></td>
+<td>Parsing, OCR, Table, Chunk, Embedding และ Candidate Fact Extraction</td>
+<td>ParsedDocument, Chunk, ExtractedFactCandidate</td>
+<td><code>DocumentParsed</code>, <code>FactsExtracted</code></td>
+</tr>
+<tr>
+<td><code>fundamentals</code></td>
+<td>งวดงบการเงิน Verified Fact, Restatement และ Unit Normalization</td>
+<td>FinancialFact, StatementPeriod, Restatement</td>
+<td><code>FinancialFactsUpdated</code></td>
+</tr>
+<tr>
+<td><code>market-data</code></td>
+<td>ราคา Volume, Corporate Action Adjustment และ Market Snapshot</td>
+<td>PriceBar, MarketSnapshot</td>
+<td><code>MarketDataUpdated</code></td>
+</tr>
+<tr>
+<td><code>metric-valuation</code></td>
+<td>Financial Ratio, EPS, Margin, FCF, Multiple, DCF และ Scenario</td>
+<td>Metric, FormulaVersion, ValuationScenario</td>
+<td><code>MetricsCalculated</code>, <code>MetricChanged</code></td>
+</tr>
+<tr>
+<td><code>research-thesis</code></td>
+<td>Thesis, Driver, Assumption, Risk, Catalyst, Trigger และ Evidence Link</td>
+<td>Thesis, ThesisItem, Trigger</td>
+<td><code>ThesisImpacted</code></td>
+</tr>
+<tr>
+<td><code>ai-analyst</code></td>
+<td>Evidence Retrieval, Explanation, Claim Classification และ Confidence</td>
+<td>AnalysisRun, AnalysisClaim, Citation</td>
+<td><code>AnalysisCompleted</code></td>
+</tr>
+<tr>
+<td><code>alert</code></td>
+<td>Alert Rule, Materiality, Deduplication, Delivery และ Acknowledgement</td>
+<td>AlertRule, Alert, DeliveryAttempt</td>
+<td><code>AlertCreated</code>, <code>NotificationDelivered</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="61-สงทตงใจไมแยกเปน-service">6.1 สิ่งที่ตั้งใจไม่แยกเป็น Service<a class="headerlink" href="#61-สงทตงใจไมแยกเปน-service" title="Permanent link">#</a></h3>
+<ul>
+<li>ไม่สร้าง Redis Service ใน Domain Model</li>
+<li>ไม่สร้าง Repository Service</li>
+<li>ไม่แยก EPS, EBITDA, DCF หรือแต่ละ Ratio เป็น Service</li>
+<li>ไม่สร้าง Generic Utility Service</li>
+<li>ไม่แยก Service ตาม Controller, Use Case หรือ Database Table เพียงอย่างเดียว</li>
+</ul>
+<hr />
+<h2 id="7-การสอสารระหวาง-service">7. การสื่อสารระหว่าง Service<a class="headerlink" href="#7-การสอสารระหวาง-service" title="Permanent link">#</a></h2>
+<h3 id="71-synchronous-communication">7.1 Synchronous Communication<a class="headerlink" href="#71-synchronous-communication" title="Permanent link">#</a></h3>
+<p>เริ่มต้นด้วย REST สำหรับ:</p>
+<ul>
+<li>Command และ Query จาก Browser</li>
+<li>Internal Lookup ปริมาณต่ำที่ต้องรอผลทันที</li>
+<li>Health และ Operational Endpoint</li>
+</ul>
+<p>เพิ่ม gRPC เมื่อผล Profiling แสดงความจำเป็น หรือ Strongly Typed Streaming ช่วย Workflow ที่ระบุได้อย่างชัดเจน</p>
+<h3 id="72-asynchronous-communication">7.2 Asynchronous Communication<a class="headerlink" href="#72-asynchronous-communication" title="Permanent link">#</a></h3>
+<p>ใช้ Kafka-compatible Broker สำหรับ Domain และ Integration Event</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant S as Scheduler
+    participant I as Ingestion
+    participant D as Document Intelligence
+    participant F as Fundamentals
+    participant M as Metric and Valuation
+    participant T as Research and Thesis
+    participant A as AI Analyst
+    participant N as Alert
+
+    S-&gt;&gt;I: Run source collection
+    I--&gt;&gt;D: DocumentCollected
+    D--&gt;&gt;F: FactsExtracted
+    F--&gt;&gt;M: FinancialFactsUpdated
+    M--&gt;&gt;T: MetricChanged
+    T--&gt;&gt;A: ThesisImpacted
+    A--&gt;&gt;N: AnalysisCompleted
+    N-&gt;&gt;N: Apply materiality and deduplication
+</pre></div>
+<h3 id="73-event-envelope">7.3 Event Envelope<a class="headerlink" href="#73-event-envelope" title="Permanent link">#</a></h3>
+<p>ทุก Event ใช้ Logical Envelope รูปแบบเดียวกัน:</p>
+<pre class="code"><code class="language-json">{
+  &quot;event_id&quot;: &quot;evt_01...&quot;,
+  &quot;event_type&quot;: &quot;financial.metric_changed.v1&quot;,
+  &quot;occurred_at&quot;: &quot;2026-09-30T01:00:00+07:00&quot;,
+  &quot;producer&quot;: &quot;metric-valuation&quot;,
+  &quot;aggregate_type&quot;: &quot;security&quot;,
+  &quot;aggregate_id&quot;: &quot;SET:CCET&quot;,
+  &quot;correlation_id&quot;: &quot;job_01...&quot;,
+  &quot;causation_id&quot;: &quot;evt_00...&quot;,
+  &quot;schema_version&quot;: 1,
+  &quot;payload&quot;: {}
+}
+</code></pre>
+
+<h3 id="74-event-catalogue-เรมตน">7.4 Event Catalogue เริ่มต้น<a class="headerlink" href="#74-event-catalogue-เรมตน" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event type</th>
+<th>Producer</th>
+<th>Consumer หลัก</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source.document_collected.v1</code></td>
+<td>ingestion</td>
+<td>document-intelligence</td>
+</tr>
+<tr>
+<td><code>document.parsed.v1</code></td>
+<td>document-intelligence</td>
+<td>audit/search pipeline</td>
+</tr>
+<tr>
+<td><code>document.facts_extracted.v1</code></td>
+<td>document-intelligence</td>
+<td>fundamentals</td>
+</tr>
+<tr>
+<td><code>fundamental.facts_updated.v1</code></td>
+<td>fundamentals</td>
+<td>metric-valuation, research-thesis</td>
+</tr>
+<tr>
+<td><code>market.data_updated.v1</code></td>
+<td>market-data</td>
+<td>metric-valuation</td>
+</tr>
+<tr>
+<td><code>valuation.metrics_calculated.v1</code></td>
+<td>metric-valuation</td>
+<td>research-thesis</td>
+</tr>
+<tr>
+<td><code>valuation.metric_changed.v1</code></td>
+<td>metric-valuation</td>
+<td>research-thesis, alert</td>
+</tr>
+<tr>
+<td><code>research.thesis_impacted.v1</code></td>
+<td>research-thesis</td>
+<td>ai-analyst, alert</td>
+</tr>
+<tr>
+<td><code>analysis.completed.v1</code></td>
+<td>ai-analyst</td>
+<td>alert</td>
+</tr>
+<tr>
+<td><code>alert.created.v1</code></td>
+<td>alert</td>
+<td>gateway, notification workers</td>
+</tr>
+<tr>
+<td><code>notification.delivered.v1</code></td>
+<td>alert</td>
+<td>audit/analytics</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="75-ขอกำหนดของ-messaging">7.5 ข้อกำหนดของ Messaging<a class="headerlink" href="#75-ขอกำหนดของ-messaging" title="Permanent link">#</a></h3>
+<ul>
+<li>สมมติว่า Delivery เป็นแบบ At-least-once</li>
+<li>Consumer ทุกตัวต้อง Idempotent</li>
+<li>ใช้ <code>event_id</code> เป็น Idempotency Key</li>
+<li>Poison Message ไป Dead-letter Topic หลัง Retry ตามจำนวนจำกัด</li>
+<li>Event ต้องมี Correlation ID และ Causation ID</li>
+<li>Payload ห้ามมี Secret</li>
+<li>Producer Publish ผ่าน Transactional Outbox</li>
+<li>Consumer เก็บ Processed Event ID หรือใช้ Inbox Pattern ที่เทียบเท่า</li>
+</ul>
+<hr />
+<h2 id="8-data-ownership-และ-storage">8. Data Ownership และ Storage<a class="headerlink" href="#8-data-ownership-และ-storage" title="Permanent link">#</a></h2>
+<h3 id="81-storage-ทเลอก">8.1 Storage ที่เลือก<a class="headerlink" href="#81-storage-ทเลอก" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>Store เริ่มต้น</th>
+<th>เงื่อนไขในการเปลี่ยน</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transactional Domain Data</td>
+<td>PostgreSQL</td>
+<td>คงไว้จนพบข้อจำกัดจากการวัดจริง</td>
+</tr>
+<tr>
+<td>Semantic Document Retrieval</td>
+<td>PostgreSQL + pgvector</td>
+<td>ใช้ Dedicated Vector Store เมื่อมีความจำเป็นที่พิสูจน์แล้ว</td>
+</tr>
+<tr>
+<td>Raw File</td>
+<td>S3-compatible Object Storage</td>
+<td>คงไว้</td>
+</tr>
+<tr>
+<td>Cache และ Distributed Lock</td>
+<td>Redis</td>
+<td>คงไว้หรือใช้ Managed Equivalent</td>
+</tr>
+<tr>
+<td>Event Log</td>
+<td>Kafka-compatible Broker</td>
+<td>คงไว้</td>
+</tr>
+<tr>
+<td>Market/Time-series Analytics</td>
+<td>PostgreSQL ในระยะแรก</td>
+<td>เพิ่ม ClickHouse เมื่อ Query Volume และ Retention ต้องการ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="82-database-ownership">8.2 Database Ownership<a class="headerlink" href="#82-database-ownership" title="Permanent link">#</a></h3>
+<p>แต่ละ Service มี Database หรือ Logical Schema และ Credential ของตัวเอง ใน Development และ Production ระยะแรกอาจใช้ PostgreSQL Cluster เดียวกันได้ แต่ต้องคง Ownership Boundary</p>
+<h3 id="83-ความแมนยำของตวเลข">8.3 ความแม่นยำของตัวเลข<a class="headerlink" href="#83-ความแมนยำของตวเลข" title="Permanent link">#</a></h3>
+<ul>
+<li>ห้ามใช้ Binary Floating Point เก็บ Money หรือ Financial Ratio ที่เป็น Authoritative Result</li>
+<li>ใช้ Decimal Library หรือ Integer Minor Unit ตามความเหมาะสม</li>
+<li>Financial Fact ทุกตัวต้องมี Currency และ Unit</li>
+<li>แยก Reported Value ออกจาก Normalized Value</li>
+<li>เก็บ Sign และรูปแบบต้นฉบับขณะ Parse งบ</li>
+</ul>
+<hr />
+<h2 id="9-core-domain-model">9. Core Domain Model<a class="headerlink" href="#9-core-domain-model" title="Permanent link">#</a></h2>
+<h3 id="91-company-master">9.1 Company Master<a class="headerlink" href="#91-company-master" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Company
+ ├── company_id
+ ├── legal_name
+ ├── country
+ └── securities[]
+
+Security
+ ├── security_id
+ ├── exchange
+ ├── symbol
+ ├── currency
+ ├── active_period
+ └── symbol_history[]
+</code></pre>
+
+<h3 id="92-source-และ-evidence">9.2 Source และ Evidence<a class="headerlink" href="#92-source-และ-evidence" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">SourceDocument
+ ├── document_id
+ ├── source_type
+ ├── source_url
+ ├── published_at
+ ├── retrieved_at
+ ├── sha256
+ ├── mime_type
+ ├── object_key
+ └── parser_version
+
+EvidenceLocation
+ ├── document_id
+ ├── page_number
+ ├── table_identifier
+ ├── row_identifier
+ ├── text_span_start
+ ├── text_span_end
+ └── quoted_excerpt
+</code></pre>
+
+<h3 id="93-financial-fact">9.3 Financial Fact<a class="headerlink" href="#93-financial-fact" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">FinancialFact
+ ├── fact_id
+ ├── security_id
+ ├── taxonomy_key
+ ├── reported_value
+ ├── normalized_value
+ ├── currency
+ ├── unit
+ ├── period_start
+ ├── period_end
+ ├── period_type
+ ├── fiscal_year
+ ├── fiscal_quarter
+ ├── consolidation_scope
+ ├── source_document_id
+ ├── evidence_location
+ ├── extraction_method
+ ├── verification_status
+ ├── restatement_version
+ └── created_at
+</code></pre>
+
+<p>สถานะการตรวจสอบ:</p>
+<pre class="code"><code class="language-text">candidate → validated_by_rule → human_verified
+          ↘ rejected
+</code></pre>
+
+<h3 id="94-metric-calculation">9.4 Metric Calculation<a class="headerlink" href="#94-metric-calculation" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">CalculatedMetric
+ ├── metric_id
+ ├── security_id
+ ├── metric_key
+ ├── value
+ ├── unit
+ ├── period
+ ├── formula_version
+ ├── input_fact_ids[]
+ ├── calculation_trace
+ └── calculated_at
+</code></pre>
+
+<h3 id="95-investment-thesis">9.5 Investment Thesis<a class="headerlink" href="#95-investment-thesis" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Thesis
+ ├── thesis_id
+ ├── security_id
+ ├── title
+ ├── status
+ ├── base_case
+ ├── bull_case
+ ├── bear_case
+ ├── drivers[]
+ ├── assumptions[]
+ ├── risks[]
+ ├── catalysts[]
+ ├── triggers[]
+ └── evidence_links[]
+</code></pre>
+
+<p>Thesis Item แต่ละรายการต้องมี:</p>
+<ul>
+<li>Statement ที่ชัดเจน</li>
+<li>Type: Driver, Assumption, Risk, Catalyst หรือ Trigger</li>
+<li>Direction: Positive, Negative หรือ Neutral</li>
+<li>Materiality</li>
+<li>เงื่อนไขที่วัดได้เมื่อทำได้</li>
+<li>Supporting Evidence และ Counter Evidence</li>
+<li>Review Status</li>
+<li>Valid-from และ Valid-to Timestamp</li>
+</ul>
+<h3 id="96-analysis-claim">9.6 Analysis Claim<a class="headerlink" href="#96-analysis-claim" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">AnalysisClaim
+ ├── claim_id
+ ├── analysis_run_id
+ ├── classification: FACT | CALCULATION | INFERENCE | HYPOTHESIS
+ ├── statement
+ ├── confidence
+ ├── citation_ids[]
+ ├── calculation_id
+ ├── counter_evidence_ids[]
+ └── unresolved_questions[]
+</code></pre>
+
+<hr />
+<h2 id="10-กฎการคำนวณทางการเงน">10. กฎการคำนวณทางการเงิน<a class="headerlink" href="#10-กฎการคำนวณทางการเงน" title="Permanent link">#</a></h2>
+<h3 id="101-metric-เรมตน">10.1 Metric เริ่มต้น<a class="headerlink" href="#101-metric-เรมตน" title="Permanent link">#</a></h3>
+<ul>
+<li>Revenue Growth: YoY, QoQ และ MoM เมื่อ Source Frequency รองรับ</li>
+<li>Gross Profit และ Gross Margin</li>
+<li>EBITDA และ EBITDA Margin เฉพาะเมื่อมีนิยาม EBITDA ชัดเจน</li>
+<li>EBIT และ EBIT Margin</li>
+<li>Net Profit และ Net Margin</li>
+<li>Basic และ Diluted EPS</li>
+<li>CFO</li>
+<li>CAPEX</li>
+<li><code>FCF = CFO - CAPEX</code> โดยต้องระบุ CAPEX Mapping</li>
+<li>Net Debt</li>
+<li>ROE และ ROIC พร้อมระบุ Denominator Convention</li>
+<li>P/E</li>
+<li>EV/EBITDA</li>
+<li>Price-to-book</li>
+<li>DCF Scenario</li>
+</ul>
+<h3 id="102-ขอกำหนดของการคำนวณ">10.2 ข้อกำหนดของการคำนวณ<a class="headerlink" href="#102-ขอกำหนดของการคำนวณ" title="Permanent link">#</a></h3>
+<p>Calculated Metric ทุกตัวต้องเก็บ:</p>
+<ul>
+<li>Formula Name และ Version</li>
+<li>Input Fact ID ทั้งหมด</li>
+<li>Period Alignment</li>
+<li>Unit Conversion</li>
+<li>Currency Conversion Rate และวันที่ หากมี</li>
+<li>วิธีจัดการค่าติดลบหรือ Missing Value</li>
+<li>Rounding Mode</li>
+<li>Result Precision</li>
+<li>Calculation Timestamp</li>
+</ul>
+<h3 id="103-restatement">10.3 Restatement<a class="headerlink" href="#103-restatement" title="Permanent link">#</a></h3>
+<p>เมื่อบริษัทแก้ไขข้อมูลย้อนหลัง:</p>
+<ol>
+<li>ห้ามเขียนทับ Historical Record โดยไม่ทิ้งร่องรอย</li>
+<li>สร้าง Restatement Version ใหม่</li>
+<li>กำหนด Version เดิมเป็น Superseded</li>
+<li>คำนวณ Metric ที่พึ่งพาข้อมูลนั้นใหม่</li>
+<li>ส่ง <code>fundamental.facts_updated.v1</code> พร้อม Restatement Flag</li>
+<li>ประเมิน Thesis Assumption ที่ได้รับผลกระทบใหม่</li>
+</ol>
+<hr />
+<h2 id="11-ขอกำหนด-ai-analyst">11. ข้อกำหนด AI Analyst<a class="headerlink" href="#11-ขอกำหนด-ai-analyst" title="Permanent link">#</a></h2>
+<h3 id="111-หนาทททำได">11.1 หน้าที่ที่ทำได้<a class="headerlink" href="#111-หนาทททำได" title="Permanent link">#</a></h3>
+<ul>
+<li>Extract Candidate Fact จากเอกสาร</li>
+<li>Classify ข้อความและส่วนของเอกสาร</li>
+<li>เชื่อม Statement กับ Citation</li>
+<li>สรุป Verified Fact และ Deterministic Calculation</li>
+<li>ระบุ Thesis Impact ที่เป็นไปได้</li>
+<li>สร้าง Hypothesis โดยต้องติดป้ายชัดเจน</li>
+<li>ระบุหลักฐานขัดแย้งและคำถามที่ยังตอบไม่ได้</li>
+</ul>
+<h3 id="112-หนาททหามทำ">11.2 หน้าที่ที่ห้ามทำ<a class="headerlink" href="#112-หนาททหามทำ" title="Permanent link">#</a></h3>
+<ul>
+<li>สร้าง Financial Value ที่ไม่มีในหลักฐาน</li>
+<li>คำนวณ Authoritative Metric โดยไม่ผ่าน Metric Service</li>
+<li>เขียน Inference ให้ดูเป็น Fact</li>
+<li>ตัดความไม่แน่นอนหรือ Source Conflict ออกจากผลลัพธ์</li>
+<li>ตัดสินใจส่งคำสั่งซื้อขายอัตโนมัติ</li>
+<li>อ้างเอกสารที่ไม่ได้ Retrieve และจัดเก็บไว้</li>
+</ul>
+<h3 id="113-accuracy-first-6-checks">11.3 Accuracy First 6 Checks<a class="headerlink" href="#113-accuracy-first-6-checks" title="Permanent link">#</a></h3>
+<p>ทุก Material Analysis ใช้การตรวจหกด้าน:</p>
+<ol>
+<li><strong>SOURCE:</strong> ให้ความสำคัญกับ Primary Source และระบุที่มาของข้อกล่าวอ้างสำคัญ</li>
+<li><strong>FACT VS INFERENCE:</strong> แยก Fact, Calculation, Inference และ Hypothesis</li>
+<li><strong>NUMBER:</strong> ตรวจ Unit, Currency, Period, Comparison Basis และ Formula</li>
+<li><strong>BRIEF:</strong> ทำตามบริษัท ช่วงเวลา Metric และ Output Constraint ที่ผู้ใช้กำหนด</li>
+<li><strong>COUNTER-CHECK:</strong> หาหลักฐานที่ขัดแย้งหรือหักล้างข้อสรุป</li>
+<li><strong>HUMAN:</strong> แสดงสิ่งที่ยังไม่รู้ และให้ผู้ใช้เป็นผู้ตัดสินใจลงทุนสุดท้าย</li>
+</ol>
+<h3 id="114-ai-output-contract">11.4 AI Output Contract<a class="headerlink" href="#114-ai-output-contract" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-json">{
+  &quot;summary&quot;: &quot;string&quot;,
+  &quot;claims&quot;: [
+    {
+      &quot;classification&quot;: &quot;FACT&quot;,
+      &quot;statement&quot;: &quot;string&quot;,
+      &quot;citation_ids&quot;: [&quot;cit_01&quot;],
+      &quot;confidence&quot;: 0.98
+    }
+  ],
+  &quot;affected_thesis_items&quot;: [
+    {
+      &quot;thesis_item_id&quot;: &quot;item_01&quot;,
+      &quot;impact&quot;: &quot;POSITIVE&quot;,
+      &quot;materiality&quot;: &quot;HIGH&quot;,
+      &quot;reason&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;counter_evidence&quot;: [],
+  &quot;unresolved_questions&quot;: []
+}
+</code></pre>
+
+<p>Service ต้อง Reject AI Response ที่ไม่ผ่าน Schema Validation</p>
+<hr />
+<h2 id="12-สถาปตยกรรมภายใน-go-service">12. สถาปัตยกรรมภายใน Go Service<a class="headerlink" href="#12-สถาปตยกรรมภายใน-go-service" title="Permanent link">#</a></h2>
+<h3 id="121-pattern-ทเลอก">12.1 Pattern ที่เลือก<a class="headerlink" href="#121-pattern-ทเลอก" title="Permanent link">#</a></h3>
+<p>ใช้ <strong>Pragmatic Ports &amp; Adapters</strong></p>
+<ul>
+<li>Core Package เก็บ Domain Rule และ Application Use Case</li>
+<li>Input Adapter เป็นผู้เรียก Application</li>
+<li>Output Adapter Implement Interface ที่ Application ต้องการ</li>
+<li><code>main.go</code> เป็น Composition Root</li>
+<li>วาง Interface ใกล้ Package ที่เป็น Consumer</li>
+<li>เพิ่มความลึกของ Folder เฉพาะเมื่อความซับซ้อนของ Domain ต้องการ</li>
+</ul>
+<h3 id="122-ทศทาง-dependency">12.2 ทิศทาง Dependency<a class="headerlink" href="#122-ทศทาง-dependency" title="Permanent link">#</a></h3>
+<div class="diagram"><pre class="mermaid">flowchart LR
+    HTTP[HTTP / gRPC / Kafka Consumer] --&gt; APP[Application Use Cases]
+    APP --&gt; DOMAIN[Domain Rules]
+    APP --&gt; PORT[Required Interfaces]
+    PG[PostgreSQL Adapter] --&gt; PORT
+    KAFKA[Kafka Producer Adapter] --&gt; PORT
+    API[External API Adapter] --&gt; PORT
+</pre></div>
+<p>Domain และ Application Core ห้าม Import Infrastructure Package</p>
+<h3 id="123-clean-code-clean-architecture-และ-ports-adapters">12.3 Clean Code, Clean Architecture และ Ports &amp; Adapters<a class="headerlink" href="#123-clean-code-clean-architecture-และ-ports-adapters" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>แนวคิด</th>
+<th>บทบาทในโครงการ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean Code</td>
+<td>Naming, API ขนาดเล็ก, Explicit Error, Focused Function, Test ที่อ่านง่าย และลด Duplication</td>
+</tr>
+<tr>
+<td>Clean Architecture</td>
+<td>Dependency Rule ที่กำหนดให้ Infrastructure พึ่ง Business Core</td>
+</tr>
+<tr>
+<td>Ports &amp; Adapters</td>
+<td>วิธีเชื่อม HTTP, Kafka, Database, External API, Storage และ LLM เข้ากับ Core</td>
+</tr>
+</tbody>
+</table></div>
+<p>ไม่จำเป็นต้องใช้ Layer เหมือนกันทุก Service:</p>
+<ul>
+<li>Gateway และ CRUD ง่ายใช้ Handler กับ Application Package ขนาดเล็กได้</li>
+<li>Fundamentals, Valuation และ Thesis ใช้ Richer Domain Model</li>
+<li>Ingestion และ Document Processing ใช้ Pipeline-oriented Application Code กับ Port สำหรับ Source และ Sink</li>
+</ul>
+<h3 id="124-ตวอยางโครงสราง-service">12.4 ตัวอย่างโครงสร้าง Service<a class="headerlink" href="#124-ตวอยางโครงสราง-service" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">services/research-thesis/
+├── cmd/
+│   └── server/
+│       └── main.go
+├── internal/
+│   ├── thesis/
+│   │   ├── thesis.go
+│   │   ├── item.go
+│   │   ├── service.go
+│   │   ├── repository.go
+│   │   ├── event.go
+│   │   └── errors.go
+│   └── adapters/
+│       ├── http/
+│       │   └── handler.go
+│       ├── kafka/
+│       │   ├── consumer.go
+│       │   └── publisher.go
+│       └── postgres/
+│           └── thesis_repository.go
+├── migrations/
+├── api/
+│   └── openapi.yaml
+├── Dockerfile
+├── go.mod
+└── go.sum
+</code></pre>
+
+<h3 id="125-กฎการเขยน-go">12.5 กฎการเขียน Go<a class="headerlink" href="#125-กฎการเขยน-go" title="Permanent link">#</a></h3>
+<ul>
+<li>ใช้ <code>context.Context</code> เป็น Parameter แรกสำหรับ I/O และ Request-scoped Operation</li>
+<li>Wrap Error พร้อม Operational Context ที่มีความหมาย</li>
+<li>ห้ามสร้าง Generic Package ชื่อ <code>utils</code> หรือ <code>common</code></li>
+<li>ใช้ Interface ขนาดเล็กที่ Consumer เป็นเจ้าของ</li>
+<li>รับ Interface และ Return Concrete Type เมื่อเหมาะสม</li>
+<li>แยก Transport DTO ออกจาก Domain Entity</li>
+<li>ห้ามส่ง Database Struct เป็น Public API Response โดยตรง</li>
+<li>Validate ที่ Trust Boundary</li>
+<li>ทำให้ Side Effect เห็นได้ชัด</li>
+<li>Inject Dependency ผ่าน Constructor ห้ามใช้ Global Mutable Service Locator</li>
+<li><code>main.go</code> มีหน้าที่ Configuration, Wiring, Lifecycle และ Shutdown</li>
+</ul>
+<hr />
+<h2 id="13-โครงสราง-repository">13. โครงสร้าง Repository<a class="headerlink" href="#13-โครงสราง-repository" title="Permanent link">#</a></h2>
+<pre class="code"><code class="language-text">stock-intelligence/
+├── services/
+│   ├── api-gateway/
+│   ├── company-master/
+│   ├── ingestion/
+│   ├── document-intelligence/
+│   ├── fundamentals/
+│   ├── market-data/
+│   ├── metric-valuation/
+│   ├── research-thesis/
+│   ├── ai-analyst/
+│   └── alert/
+│
+├── web/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── contracts/
+│   ├── openapi/
+│   ├── asyncapi/
+│   ├── events/
+│   └── protobuf/
+│
+├── deployments/
+│   ├── local/
+│   ├── kubernetes/
+│   ├── observability/
+│   └── migrations/
+│
+├── docs/
+│   ├── adr/
+│   ├── runbooks/
+│   └── data-dictionary/
+│
+├── scripts/
+├── go.work
+├── Makefile
+└── README.md
+</code></pre>
+
+<h3 id="131-module-policy">13.1 Module Policy<a class="headerlink" href="#131-module-policy" title="Permanent link">#</a></h3>
+<ul>
+<li>Backend Service แต่ละตัวมี <code>go.mod</code> ของตัวเอง</li>
+<li>Root <code>go.work</code> ใช้สำหรับ Local Development เท่านั้น</li>
+<li>Deployment ห้ามพึ่ง <code>go.work</code></li>
+<li>ห้ามแชร์ Business Domain Code ระหว่าง Service ผ่าน Go Import</li>
+<li>Generated Contract Type และ Technical Library ขนาดเล็กแชร์ได้เมื่อพิสูจน์ความจำเป็นแล้ว</li>
+</ul>
+<hr />
+<h2 id="14-http-api-เรมตน">14. HTTP API เริ่มต้น<a class="headerlink" href="#14-http-api-เรมตน" title="Permanent link">#</a></h2>
+<h3 id="141-company-และ-watchlist">14.1 Company และ Watchlist<a class="headerlink" href="#141-company-และ-watchlist" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/companies
+GET    /v1/securities/{securityId}
+GET    /v1/watchlists
+POST   /v1/watchlists
+POST   /v1/watchlists/{watchlistId}/securities
+DELETE /v1/watchlists/{watchlistId}/securities/{securityId}
+</code></pre>
+
+<h3 id="142-document-และ-evidence">14.2 Document และ Evidence<a class="headerlink" href="#142-document-และ-evidence" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/documents
+GET    /v1/documents/{documentId}
+GET    /v1/documents/{documentId}/facts
+POST   /v1/facts/{factId}/verify
+POST   /v1/facts/{factId}/reject
+</code></pre>
+
+<h3 id="143-financial-และ-valuation">14.3 Financial และ Valuation<a class="headerlink" href="#143-financial-และ-valuation" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/financials
+GET    /v1/securities/{securityId}/metrics
+GET    /v1/securities/{securityId}/valuations
+POST   /v1/securities/{securityId}/valuation-scenarios
+</code></pre>
+
+<h3 id="144-thesis-และ-alert">14.4 Thesis และ Alert<a class="headerlink" href="#144-thesis-และ-alert" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">GET    /v1/securities/{securityId}/theses
+POST   /v1/securities/{securityId}/theses
+PATCH  /v1/theses/{thesisId}
+POST   /v1/theses/{thesisId}/items
+POST   /v1/theses/{thesisId}/evaluate
+GET    /v1/alerts
+POST   /v1/alerts/{alertId}/acknowledge
+</code></pre>
+
+<h3 id="145-api-convention">14.5 API Convention<a class="headerlink" href="#145-api-convention" title="Permanent link">#</a></h3>
+<ul>
+<li>ใช้ JSON Request และ Response</li>
+<li>API ใช้ UTC Timestamp ส่วน UI แสดง Asia/Bangkok เป็นค่าเริ่มต้น</li>
+<li>ใช้ Cursor Pagination สำหรับ List ที่โตได้ต่อเนื่อง</li>
+<li>Error ใช้โครงสร้างแบบ RFC 7807 Problem Details</li>
+<li>Retryable External Command ต้องมี Idempotency Key</li>
+<li>Editable Thesis Resource ใช้ Optimistic Concurrency</li>
+<li>เมื่อ Public Contract เปลี่ยน ต้องแก้ OpenAPI ก่อน Implementation</li>
+</ul>
+<hr />
+<h2 id="15-source-collection-pipeline">15. Source Collection Pipeline<a class="headerlink" href="#15-source-collection-pipeline" title="Permanent link">#</a></h2>
+<h3 id="151-processing-stage">15.1 Processing Stage<a class="headerlink" href="#151-processing-stage" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">discover
+  → fetch
+  → hash
+  → deduplicate
+  → store raw document
+  → register metadata
+  → parse
+  → extract candidate facts
+  → validate schema and units
+  → persist candidates
+  → human/rule verification
+  → publish verified updates
+</code></pre>
+
+<h3 id="152-source-adapter-contract">15.2 Source Adapter Contract<a class="headerlink" href="#152-source-adapter-contract" title="Permanent link">#</a></h3>
+<p>Source Adapter ทุกตัวต้องมีความสามารถเทียบเท่า Interface นี้:</p>
+<pre class="code"><code class="language-go">type Source interface {
+    Discover(ctx context.Context, cursor Cursor) ([]DocumentRef, Cursor, error)
+    Fetch(ctx context.Context, ref DocumentRef) (Document, error)
+}
+</code></pre>
+
+<h3 id="153-ขอกำหนด-collection">15.3 ข้อกำหนด Collection<a class="headerlink" href="#153-ขอกำหนด-collection" title="Permanent link">#</a></h3>
+<ul>
+<li>เคารพ Rate Limit และข้อกำหนดของ Source</li>
+<li>Retry Transient Error ด้วย Capped Exponential Backoff และ Jitter</li>
+<li>Permanent Validation Failure ไม่ Retry อัตโนมัติ</li>
+<li>เก็บ Retrieval Status และ Error Category</li>
+<li>Hash Document Byte ก่อน Parse</li>
+<li>Content ที่ Hash เหมือนกันถือเป็น Duplicate แต่ต้องเก็บ Discovery Metadata</li>
+<li>เก็บ Parser และ Extractor Version</li>
+</ul>
+<hr />
+<h2 id="16-thesis-impact-engine">16. Thesis Impact Engine<a class="headerlink" href="#16-thesis-impact-engine" title="Permanent link">#</a></h2>
+<h3 id="161-ประเภท-trigger">16.1 ประเภท Trigger<a class="headerlink" href="#161-ประเภท-trigger" title="Permanent link">#</a></h3>
+<ul>
+<li>Threshold: <code>gross_margin &lt; 0.06</code></li>
+<li>Percentage Change: Revenue Growth ลดลงเกินค่าที่กำหนด</li>
+<li>State Change: Project Status เปลี่ยนจาก Planned เป็น Delayed</li>
+<li>Evidence Appearance: พบชื่อลูกค้าหรือโครงการใน Primary Source</li>
+<li>Evidence Disappearance: ข้อมูลที่คาดว่าจะเปิดเผยไม่ปรากฏภายในช่วงเวลาที่กำหนด</li>
+<li>Contradiction: หลักฐานใหม่ขัดกับ Assumption ปัจจุบัน</li>
+<li>Scheduled Review: Thesis ไม่ได้รับการ Review ภายในกำหนด</li>
+</ul>
+<h3 id="162-materiality">16.2 Materiality<a class="headerlink" href="#162-materiality" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">LOW      ข้อมูลประกอบ แสดงบน Dashboard
+MEDIUM   Thesis Item อาจต้องได้รับการ Review
+HIGH     Assumption หรือ Valuation อาจเปลี่ยนอย่างมีนัยสำคัญ
+CRITICAL เข้า Invalidation Condition หรือเกิดความเสี่ยงรุนแรง
+</code></pre>
+
+<p>Materiality ต้องมาจาก Explicit Rule หรือ Human-reviewed Mapping AI เสนอ Materiality ได้ แต่ห้ามเขียนทับผล Rule โดยไม่แสดงให้ผู้ใช้ทราบ</p>
+<hr />
+<h2 id="17-alert-contract">17. Alert Contract<a class="headerlink" href="#17-alert-contract" title="Permanent link">#</a></h2>
+<p>Alert ที่ผู้ใช้เห็นต้องมี:</p>
+<pre class="code"><code class="language-text">Title
+Security
+What changed
+Published and detected time
+Source and citation
+Affected metric
+Affected thesis item
+Materiality
+Fact / Calculation / Inference / Hypothesis labels
+Supporting evidence
+Counter evidence
+Unknowns
+Suggested review action
+Delivery status
+</code></pre>
+
+<p>Deduplication Key:</p>
+<pre class="code"><code class="language-text">user_id + security_id + thesis_item_id + triggering_event_id + rule_version
+</code></pre>
+
+<hr />
+<h2 id="18-security-และ-privacy">18. Security และ Privacy<a class="headerlink" href="#18-security-และ-privacy" title="Permanent link">#</a></h2>
+<ul>
+<li>ใช้ Authentication ที่รองรับ OIDC/OAuth 2.0</li>
+<li>บังคับ Authorization ที่ Owning Service ไม่พึ่ง Gateway เพียงชั้นเดียว</li>
+<li>ห้ามใส่ Access Token, Credential, Private Document Content หรือ Personal Data ใน Event</li>
+<li>Production เก็บ Secret ใน Secret Manager</li>
+<li>Encrypt Traffic ระหว่างทาง</li>
+<li>Encrypt Managed Storage ขณะจัดเก็บ</li>
+<li>Validate File Type และ File Size</li>
+<li>ใช้ Egress Allowlist กับ Collector เมื่อเหมาะสม</li>
+<li>เก็บ Audit Log สำหรับ Verification, Thesis Edit และ Notification Action</li>
+<li>กำหนด Data Retention และ Deletion Policy ก่อนรองรับ Team Workspace</li>
+</ul>
+<hr />
+<h2 id="19-reliability-และ-non-functional-requirements">19. Reliability และ Non-functional Requirements<a class="headerlink" href="#19-reliability-และ-non-functional-requirements" title="Permanent link">#</a></h2>
+<h3 id="191-service-objective-เรมตน">19.1 Service Objective เริ่มต้น<a class="headerlink" href="#191-service-objective-เรมตน" title="Permanent link">#</a></h3>
+<p>เป้าหมายต่อไปนี้เป็น Initial Engineering Target และต้องปรับหลังมีข้อมูลใช้งานจริง</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>เป้าหมายเริ่มต้น</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public Read API Availability</td>
+<td>99.5% ต่อเดือน</td>
+</tr>
+<tr>
+<td>ตรวจพบ Official Document ใหม่</td>
+<td>ภายใน 15 นาทีหลัง Source Check สำเร็จ</td>
+</tr>
+<tr>
+<td>ประมวลผลเอกสารปกติ</td>
+<td>ภายใน 10 นาทีหลัง Collection</td>
+</tr>
+<tr>
+<td>สร้าง Alert หลัง Verified Material Change</td>
+<td>ภายใน 5 นาที</td>
+</tr>
+<tr>
+<td>Event Loss</td>
+<td>ไม่สูญเสีย Event ที่ Broker Acknowledge แล้ว</td>
+</tr>
+<tr>
+<td>Citation Coverage</td>
+<td>100% ของ FACT Claim</td>
+</tr>
+<tr>
+<td>Calculation Reproducibility</td>
+<td>100% จาก Input และ Formula Version ที่เก็บไว้</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="192-resilience">19.2 Resilience<a class="headerlink" href="#192-resilience" title="Permanent link">#</a></h3>
+<ul>
+<li>Graceful Shutdown ทุก Service</li>
+<li>Health, Readiness และ Liveness Endpoint</li>
+<li>Network Call ทุกครั้งมี Timeout</li>
+<li>Bounded Retry</li>
+<li>ใช้ Circuit Breaker เมื่อมี Failure Pattern ที่พิสูจน์ความจำเป็น</li>
+<li>Backpressure สำหรับ Document และ AI Pipeline</li>
+<li>Dead-letter Handling และ Replay Tool</li>
+<li>Idempotent Consumer</li>
+<li>Database Migration รองรับ Rolling Deployment</li>
+</ul>
+<hr />
+<h2 id="20-observability">20. Observability<a class="headerlink" href="#20-observability" title="Permanent link">#</a></h2>
+<h3 id="201-signal-ทตองม">20.1 Signal ที่ต้องมี<a class="headerlink" href="#201-signal-ทตองม" title="Permanent link">#</a></h3>
+<ul>
+<li>Structured Log</li>
+<li>Metric</li>
+<li>Distributed Trace</li>
+<li>Audit Event</li>
+<li>Business Pipeline Metric</li>
+</ul>
+<h3 id="202-identifier-ทตองสงตอ">20.2 Identifier ที่ต้องส่งต่อ<a class="headerlink" href="#202-identifier-ทตองสงตอ" title="Permanent link">#</a></h3>
+<p>ทุก Request, Job, Event และ Analysis ควรมีตามความเหมาะสม:</p>
+<ul>
+<li><code>trace_id</code></li>
+<li><code>request_id</code></li>
+<li><code>correlation_id</code></li>
+<li><code>causation_id</code></li>
+<li><code>event_id</code></li>
+<li><code>job_id</code></li>
+<li><code>document_id</code></li>
+<li><code>security_id</code></li>
+</ul>
+<h3 id="203-operational-metric-หลก">20.3 Operational Metric หลัก<a class="headerlink" href="#203-operational-metric-หลก" title="Permanent link">#</a></h3>
+<ul>
+<li>จำนวน Source Check และ Failure แยกตาม Source</li>
+<li>จำนวน Document ที่ Collected, Duplicated, Parsed และ Rejected</li>
+<li>Parsing Latency</li>
+<li>Extraction Validation Failure Rate</li>
+<li>Fact Verification Backlog</li>
+<li>Consumer Lag</li>
+<li>Event Retry และ Dead-letter Count</li>
+<li>Metric Recalculation Latency</li>
+<li>Thesis Impact แยก Materiality</li>
+<li>AI Schema Failure และ Citation Failure Rate</li>
+<li>Alert Delivery Success และ Latency</li>
+<li>External API Latency และ Error Rate</li>
+<li>Cost ต่อ Document และ AI Analysis</li>
+</ul>
+<hr />
+<h2 id="21-testing-strategy">21. Testing Strategy<a class="headerlink" href="#21-testing-strategy" title="Permanent link">#</a></h2>
+<h3 id="211-domain-unit-test">21.1 Domain Unit Test<a class="headerlink" href="#211-domain-unit-test" title="Permanent link">#</a></h3>
+<p>ต้องมีสำหรับ:</p>
+<ul>
+<li>สูตรการเงิน</li>
+<li>Period Normalization</li>
+<li>Unit และ Currency Conversion</li>
+<li>Thesis Trigger Evaluation</li>
+<li>Materiality Rule</li>
+<li>Restatement Behavior</li>
+<li>Alert Deduplication</li>
+</ul>
+<h3 id="212-adapter-integration-test">21.2 Adapter Integration Test<a class="headerlink" href="#212-adapter-integration-test" title="Permanent link">#</a></h3>
+<p>ต้องมีสำหรับ:</p>
+<ul>
+<li>PostgreSQL Repository</li>
+<li>Kafka Publish/Consume และ Outbox</li>
+<li>Object Storage</li>
+<li>Source Adapter โดยใช้ Recorded Fixture</li>
+<li>PDF/Table Parser</li>
+<li>Notification Channel Adapter</li>
+</ul>
+<h3 id="213-contract-test">21.3 Contract Test<a class="headerlink" href="#213-contract-test" title="Permanent link">#</a></h3>
+<ul>
+<li>Validate OpenAPI Request และ Response</li>
+<li>Validate Event ทุกตัวกับ Versioned Schema</li>
+<li>ทดสอบ Consumer Compatibility กับ Event Version ปัจจุบันและ Version ก่อนหน้าที่ยังรองรับ</li>
+<li>ป้องกัน Producer เปลี่ยนความหมายของ Field โดยไม่แก้ Contract</li>
+</ul>
+<h3 id="214-end-to-end-golden-path">21.4 End-to-end Golden Path<a class="headerlink" href="#214-end-to-end-golden-path" title="Permanent link">#</a></h3>
+<p>Baseline Fixture ต้องพิสูจน์ว่า:</p>
+<ol>
+<li>ระบบค้นพบ Official Sample Document</li>
+<li>เอกสารถูกเก็บและ Deduplicate</li>
+<li>Extract Financial Fact พร้อม Evidence Location</li>
+<li>Fact ได้รับการ Verify</li>
+<li>Metric ถูกคำนวณและทำซ้ำได้</li>
+<li>Thesis Trigger ถูก Match</li>
+<li>สร้าง Analysis ที่มีหลักฐาน</li>
+<li>ผู้ใช้ได้รับ Alert หนึ่งครั้ง</li>
+</ol>
+<h3 id="215-ai-evaluation">21.5 AI Evaluation<a class="headerlink" href="#215-ai-evaluation" title="Permanent link">#</a></h3>
+<p>จัดเก็บ Versioned Evaluation Set ที่ครอบคลุม:</p>
+<ul>
+<li>Extraction Accuracy</li>
+<li>Citation Correctness</li>
+<li>Numerical Faithfulness</li>
+<li>Fact vs Inference Classification</li>
+<li>Conflicting Evidence</li>
+<li>Insufficient Evidence</li>
+<li>เอกสารภาษาไทยและอังกฤษ</li>
+<li>Prompt Injection ภายใน Retrieved Document</li>
+</ul>
+<hr />
+<h2 id="22-deployment-model">22. Deployment Model<a class="headerlink" href="#22-deployment-model" title="Permanent link">#</a></h2>
+<h3 id="221-local-development">22.1 Local Development<a class="headerlink" href="#221-local-development" title="Permanent link">#</a></h3>
+<p>ใช้ Docker Compose สำหรับ:</p>
+<ul>
+<li>PostgreSQL Database</li>
+<li>Kafka-compatible Broker</li>
+<li>Redis</li>
+<li>S3-compatible Object Storage</li>
+<li>Observability Stack</li>
+<li>Service ที่กำลังพัฒนา</li>
+</ul>
+<p>Service สามารถรันตรงด้วย <code>go run</code> ขณะที่ Dependency รันใน Container</p>
+<h3 id="222-production-evolution">22.2 Production Evolution<a class="headerlink" href="#222-production-evolution" title="Permanent link">#</a></h3>
+<p>Phase แรกใช้ Managed Container หรือ Container Platform ขนาดเล็กได้ เพิ่ม Kubernetes เมื่อ Independent Scaling, Deployment Count, Operational Policy หรือ Availability Requirement คุ้มกับต้นทุนการดูแล</p>
+<h3 id="223-cicd">22.3 CI/CD<a class="headerlink" href="#223-cicd" title="Permanent link">#</a></h3>
+<p>สำหรับ Service ที่มีการแก้ไข:</p>
+<ol>
+<li>Format และ Static Analysis</li>
+<li>Unit Test</li>
+<li>Contract Validation</li>
+<li>Integration Test</li>
+<li>Build Immutable Container Image</li>
+<li>Vulnerability และ Secret Scan</li>
+<li>Migration Compatibility Check</li>
+<li>Deploy สู่ Non-production</li>
+<li>Smoke Test</li>
+<li>Controlled Production Rollout</li>
+</ol>
+<hr />
+<h2 id="23-spec-driven-development-workflow">23. Spec-Driven Development Workflow<a class="headerlink" href="#23-spec-driven-development-workflow" title="Permanent link">#</a></h2>
+<h3 id="231-artifact-ทตองม">23.1 Artifact ที่ต้องมี<a class="headerlink" href="#231-artifact-ทตองม" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-text">Requirement
+  ↓
+Acceptance criteria
+  ↓
+Domain/API/Event contract
+  ↓
+Architecture decision เมื่อจำเป็น
+  ↓
+Implementation tasks
+  ↓
+Code and migrations
+  ↓
+Verification evidence
+</code></pre>
+
+<h3 id="232-ขนตอนการเปลยนแปลง">23.2 ขั้นตอนการเปลี่ยนแปลง<a class="headerlink" href="#232-ขนตอนการเปลยนแปลง" title="Permanent link">#</a></h3>
+<p>เมื่อพฤติกรรมระบบเปลี่ยน:</p>
+<ol>
+<li>กำหนด Requirement ID</li>
+<li>อธิบายผลลัพธ์ที่ผู้ใช้หรือระบบต้องได้รับ</li>
+<li>ระบุ Owning Service</li>
+<li>เขียน Acceptance Criteria ที่สังเกตและทดสอบได้</li>
+<li>แก้ OpenAPI, AsyncAPI, Event JSON Schema หรือ Data Dictionary ก่อน หากได้รับผลกระทบ</li>
+<li>สร้าง ADR หากเปลี่ยน Service Boundary, Ownership, Communication, Storage, Security Model หรือ Convention ที่กระทบหลาย Service</li>
+<li>แบ่งงานเป็น Task ที่ Verify แยกได้</li>
+<li>Implement Vertical Slice ที่เล็กที่สุด</li>
+<li>แนบผลทดสอบและ Known Limitation</li>
+<li>อัปเดต Specification และ ADR Status</li>
+</ol>
+<h3 id="233-requirement-template">23.3 Requirement Template<a class="headerlink" href="#233-requirement-template" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-markdown">### REQ-XXX — ชื่อสั้น
+
+**Problem:**  
+ปัญหาของผู้ใช้หรือระบบ
+
+**Owner:**  
+Microservice ที่เป็นเจ้าของ
+
+**Inputs:**  
+ข้อมูลและแหล่งที่ต้องใช้
+
+**Behavior:**  
+พฤติกรรมระบบที่สังเกตได้
+
+**Outputs:**  
+API Response, Event, Stored Entity หรือ Notification
+
+**Acceptance criteria:**
+
+- [ ] Given / When / Then
+- [ ] ระบุพฤติกรรมเมื่อเกิด Failure
+- [ ] ระบุ Audit และ Observability
+
+**Contracts affected:**  
+OpenAPI, Event Schema, Database Migration หรือ None
+
+**Risks and unknowns:**  
+คำถามและสมมติฐานที่ยังเปิดอยู่
+</code></pre>
+
+<h3 id="234-architecture-decision-record-template">23.4 Architecture Decision Record Template<a class="headerlink" href="#234-architecture-decision-record-template" title="Permanent link">#</a></h3>
+<pre class="code"><code class="language-markdown"># ADR-XXX: ชื่อการตัดสินใจ
+
+- Status: Proposed | Accepted | Superseded | Rejected
+- Date: YYYY-MM-DD
+
+## Context
+
+## Decision
+
+## Alternatives considered
+
+## Consequences
+
+## Migration or rollback plan
+</code></pre>
+
+<h3 id="235-กฎสำหรบ-ai-coding-agent">23.5 กฎสำหรับ AI Coding Agent<a class="headerlink" href="#235-กฎสำหรบ-ai-coding-agent" title="Permanent link">#</a></h3>
+<p>AI Agent ที่ทำงานในโครงการต้อง:</p>
+<ul>
+<li>บอก Requirement และ Service ที่กำลังแก้</li>
+<li>ตรวจ Contract ปัจจุบันก่อน Implement</li>
+<li>ห้ามสร้าง API, Source Field หรือ Financial Semantic เองโดยไม่มีหลักฐาน</li>
+<li>รักษา Backward Compatibility เว้นแต่ Spec อนุญาตให้ Break</li>
+<li>ไม่วาง Business Logic ใน Handler หรือ Database Adapter</li>
+<li>เขียน Test ที่ป้องกัน Behavior ไม่ใช่จำลอง Implementation</li>
+<li>รายงานไฟล์ที่เปลี่ยน การ Verify ที่ทำ และ Risk ที่ยังเหลือ</li>
+<li>อัปเดต Spec เมื่อ Decision เปลี่ยน</li>
+<li>หยุดและแจ้งความกำกวมเมื่อไม่สามารถตัดสิน Financial Meaning, Data Ownership หรือ Destructive Migration ได้อย่างปลอดภัย</li>
+</ul>
+<hr />
+<h2 id="24-initial-requirements-และ-acceptance-criteria">24. Initial Requirements และ Acceptance Criteria<a class="headerlink" href="#24-initial-requirements-และ-acceptance-criteria" title="Permanent link">#</a></h2>
+<h3 id="req-001-เกบ-official-source-document">REQ-001 — เก็บ Official Source Document<a class="headerlink" href="#req-001-เกบ-official-source-document" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>ingestion</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> ตรวจ Source ที่ Configure ไว้ตาม Schedule ได้</li>
+<li class="task"><input type="checkbox" disabled> ดาวน์โหลดเอกสารใหม่พร้อม URL, Timestamp, MIME Type และ SHA-256</li>
+<li class="task"><input type="checkbox" disabled> ไม่เก็บ Content Byte ที่เหมือนกันซ้ำ</li>
+<li class="task"><input type="checkbox" disabled> เก็บ Discovery Metadata แม้ Content ซ้ำ</li>
+<li class="task"><input type="checkbox" disabled> Publish <code>source.document_collected.v1</code> ผ่าน Outbox</li>
+<li class="task"><input type="checkbox" disabled> แยก Transient และ Permanent Failure ได้ใน Log และ Metric</li>
+</ul>
+<h3 id="req-002-extract-financial-fact-ทยอนกลบไปหาหลกฐานได">REQ-002 — Extract Financial Fact ที่ย้อนกลับไปหาหลักฐานได้<a class="headerlink" href="#req-002-extract-financial-fact-ทยอนกลบไปหาหลกฐานได" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>document-intelligence</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Parser บันทึก Version</li>
+<li class="task"><input type="checkbox" disabled> Candidate Fact มี Value, Unit, Period, Taxonomy Key และ Evidence Location</li>
+<li class="task"><input type="checkbox" disabled> Reviewer เปิดดูหน้าเอกสารหรือ Location ที่รองรับ Fact ได้</li>
+<li class="task"><input type="checkbox" disabled> Reject Output ที่ไม่ผ่าน Schema</li>
+<li class="task"><input type="checkbox" disabled> Candidate ไม่กลายเป็น Authoritative Fact อัตโนมัติ เว้นแต่ผ่าน Validation Rule ที่บันทึกไว้</li>
+</ul>
+<h3 id="req-003-verify-และ-version-financial-fact">REQ-003 — Verify และ Version Financial Fact<a class="headerlink" href="#req-003-verify-และ-version-financial-fact" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>fundamentals</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Verify หรือ Reject Candidate ได้</li>
+<li class="task"><input type="checkbox" disabled> Verification เก็บ Actor, Time และ Reason</li>
+<li class="task"><input type="checkbox" disabled> Restatement สร้าง Version ใหม่โดยไม่ลบ Version เดิม</li>
+<li class="task"><input type="checkbox" disabled> Verified Change Publish <code>fundamental.facts_updated.v1</code></li>
+</ul>
+<h3 id="req-004-คำนวณ-metric-ททำซำได">REQ-004 — คำนวณ Metric ที่ทำซ้ำได้<a class="headerlink" href="#req-004-คำนวณ-metric-ททำซำได" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>metric-valuation</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Calculation เก็บ Formula Version และ Input ID ทั้งหมด</li>
+<li class="task"><input type="checkbox" disabled> รันซ้ำด้วย Input เดิมได้ Output เดิม</li>
+<li class="task"><input type="checkbox" disabled> มี Test สำหรับ Unit, Period, Missing Value และ Rounding</li>
+<li class="task"><input type="checkbox" disabled> Material Result Change Publish <code>valuation.metric_changed.v1</code></li>
+</ul>
+<h3 id="req-005-ตรวจ-thesis-impact">REQ-005 — ตรวจ Thesis Impact<a class="headerlink" href="#req-005-ตรวจ-thesis-impact" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>research-thesis</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> ผู้ใช้กำหนด Measurable Thesis Trigger ได้</li>
+<li class="task"><input type="checkbox" disabled> Incoming Metric Change ถูก Match กับ Active Trigger ที่เกี่ยวข้อง</li>
+<li class="task"><input type="checkbox" disabled> ผลระบุ Thesis Item และ Materiality ที่ได้รับผลกระทบ</li>
+<li class="task"><input type="checkbox" disabled> Trigger Evaluation เป็น Idempotent</li>
+<li class="task"><input type="checkbox" disabled> เมื่อ Match แล้ว Publish <code>research.thesis_impacted.v1</code></li>
+</ul>
+<h3 id="req-006-สรางคำอธบายทมหลกฐาน">REQ-006 — สร้างคำอธิบายที่มีหลักฐาน<a class="headerlink" href="#req-006-สรางคำอธบายทมหลกฐาน" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>ai-analyst</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> FACT Claim ทุกข้อมี Stored Citation อย่างน้อยหนึ่งรายการ</li>
+<li class="task"><input type="checkbox" disabled> Calculated Value อ้าง Metric Service Result</li>
+<li class="task"><input type="checkbox" disabled> แยก Fact, Calculation, Inference และ Hypothesis</li>
+<li class="task"><input type="checkbox" disabled> แสดง Counter Evidence และ Unknown เมื่อมี</li>
+<li class="task"><input type="checkbox" disabled> Reject หรือ Retry Schema-invalid Response ตาม Bounded Policy</li>
+</ul>
+<h3 id="req-007-สง-material-alert-หนงครง">REQ-007 — ส่ง Material Alert หนึ่งครั้ง<a class="headerlink" href="#req-007-สง-material-alert-หนงครง" title="Permanent link">#</a></h3>
+<p><strong>Owner:</strong> <code>alert</code></p>
+<p><strong>Acceptance criteria:</strong></p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Materiality Rule เป็นผู้ตัดสินว่าจะส่ง Notification หรือไม่</li>
+<li class="task"><input type="checkbox" disabled> Duplicate Upstream Delivery ไม่ทำให้ผู้ใช้เห็น Alert ซ้ำ</li>
+<li class="task"><input type="checkbox" disabled> Audit Delivery Attempt และ Final Status ได้</li>
+<li class="task"><input type="checkbox" disabled> Alert เชื่อม Thesis Item, Metric และ Evidence ได้</li>
+</ul>
+<hr />
+<h2 id="25-delivery-roadmap">25. Delivery Roadmap<a class="headerlink" href="#25-delivery-roadmap" title="Permanent link">#</a></h2>
+<h3 id="phase-0-foundation">Phase 0 — Foundation<a class="headerlink" href="#phase-0-foundation" title="Permanent link">#</a></h3>
+<ul>
+<li>Repository และ Service Template</li>
+<li>Contract Validation</li>
+<li>Local Development Environment</li>
+<li>Logging, Tracing, Metrics, Configuration และ Graceful Shutdown</li>
+<li>CI Pipeline</li>
+</ul>
+<h3 id="phase-1-evidence-vertical-slice">Phase 1 — Evidence Vertical Slice<a class="headerlink" href="#phase-1-evidence-vertical-slice" title="Permanent link">#</a></h3>
+<p>พัฒนา:</p>
+<ul>
+<li><code>company-master</code></li>
+<li><code>ingestion</code></li>
+<li><code>document-intelligence</code></li>
+<li><code>fundamentals</code> ขั้นต่ำ</li>
+<li>Dashboard ขั้นต่ำ</li>
+</ul>
+<p><strong>Exit condition:</strong> Official Document กลายเป็น Reviewable Fact ที่มีตำแหน่งหลักฐานชัดเจน</p>
+<h3 id="phase-2-financial-intelligence">Phase 2 — Financial Intelligence<a class="headerlink" href="#phase-2-financial-intelligence" title="Permanent link">#</a></h3>
+<ul>
+<li>Financial Normalization</li>
+<li>Restatement</li>
+<li>Metric and Valuation Service</li>
+<li>Historical Metric View</li>
+</ul>
+<p><strong>Exit condition:</strong> Metric ที่เลือกสามารถคำนวณซ้ำจาก Stored Fact ได้</p>
+<h3 id="phase-3-thesis-monitoring">Phase 3 — Thesis Monitoring<a class="headerlink" href="#phase-3-thesis-monitoring" title="Permanent link">#</a></h3>
+<ul>
+<li>Thesis Model</li>
+<li>Trigger</li>
+<li>Impact Engine</li>
+<li>Alert Service</li>
+<li>External Channel อย่างน้อยหนึ่งช่องทาง</li>
+</ul>
+<p><strong>Exit condition:</strong> Financial Change สร้าง Thesis Alert ที่ตรวจสอบได้หนึ่งครั้ง</p>
+<h3 id="phase-4-ai-analyst">Phase 4 — AI Analyst<a class="headerlink" href="#phase-4-ai-analyst" title="Permanent link">#</a></h3>
+<ul>
+<li>Evidence Retrieval</li>
+<li>Structured AI Output</li>
+<li>Accuracy First 6 Checks</li>
+<li>Evaluation Dataset</li>
+<li>Human Feedback</li>
+</ul>
+<p><strong>Exit condition:</strong> FACT Claim ทุกข้อมี Citation และตัวเลขทั้งหมดมาจาก Verified Fact หรือ Deterministic Calculation</p>
+<h3 id="phase-5-market-data-และ-scaling">Phase 5 — Market Data และ Scaling<a class="headerlink" href="#phase-5-market-data-และ-scaling" title="Permanent link">#</a></h3>
+<ul>
+<li>Market Data Service</li>
+<li>Event Replay และ Operational Tool</li>
+<li>Load Test</li>
+<li>Cost Measurement</li>
+<li>เพิ่ม ClickHouse หรือ Kubernetes เมื่อ Measured Requirement รองรับ</li>
+</ul>
+<hr />
+<h2 id="26-สรป-architecture-decision-ทยอมรบแลว">26. สรุป Architecture Decision ที่ยอมรับแล้ว<a class="headerlink" href="#26-สรป-architecture-decision-ทยอมรบแลว" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>การตัดสินใจ</th>
+<th>สถานะ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADR-001</td>
+<td>แบ่ง Service ตาม Bounded Context</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-002</td>
+<td>ใช้ Go สำหรับ Backend Service</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-003</td>
+<td>ใช้ Next.js และ TypeScript สำหรับ Web Frontend</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-004</td>
+<td>ใช้ Pragmatic Ports &amp; Adapters ภายใน Service</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-005</td>
+<td>ใช้ PostgreSQL เป็น Transactional Store เริ่มต้น</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-006</td>
+<td>ใช้ Kafka-compatible Event Backbone</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-007</td>
+<td>แยก Data Ownership ต่อ Service</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-008</td>
+<td>ใช้ Transactional Outbox และ Idempotent Consumer</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-009</td>
+<td>Financial Calculation เป็นหน้าที่ของ Deterministic Code</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-010</td>
+<td>LLM Output ต้อง Structured, Cited และ Validated</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-011</td>
+<td>Monorepo, แยก Go Module ต่อ Service และมี Root <code>go.work</code></td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td>ADR-012</td>
+<td>เริ่มด้วย REST และเพิ่ม gRPC เมื่อพิสูจน์ความจำเป็น</td>
+<td>Accepted</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="27-คำถามทยงเปดและ-working-default">27. คำถามที่ยังเปิดและ Working Default<a class="headerlink" href="#27-คำถามทยงเปดและ-working-default" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>คำถาม</th>
+<th>Working Default จนกว่าจะตัดสินใจ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>วิธีเข้าถึง SET/SEC อย่างเป็นทางการ</td>
+<td>สร้าง Source Adapter หนึ่งตัวหลังยืนยันสิทธิ์การเข้าถึงและรูปแบบเอกสาร</td>
+</tr>
+<tr>
+<td>Authentication Provider</td>
+<td>Managed Provider ที่รองรับ OIDC</td>
+</tr>
+<tr>
+<td>Notification Channel</td>
+<td>เลือก LINE หรือ Telegram ตาม API ที่เข้าถึงได้และความต้องการผู้ใช้</td>
+</tr>
+<tr>
+<td>AI Provider</td>
+<td>ซ่อนหลัง Output Port และบังคับ Structured JSON กับ Citation</td>
+</tr>
+<tr>
+<td>Market Data Licensing</td>
+<td>ใช้ข้อมูลหลังยืนยันสิทธิ์การใช้งานและ Retention</td>
+</tr>
+<tr>
+<td>Fundamental Taxonomy</td>
+<td>เริ่ม Canonical Taxonomy ขนาดเล็กที่มีเอกสาร แล้วค่อยขยาย</td>
+</tr>
+<tr>
+<td>Deployment Platform</td>
+<td>Docker Compose ใน Local และ Managed Container สำหรับ Production แรก</td>
+</tr>
+<tr>
+<td>Multi-tenancy</td>
+<td>เริ่มรองรับ Single User แต่มี <code>user_id</code> และ Ownership Field สำหรับขยาย</td>
+</tr>
+<tr>
+<td>Human Verification UI</td>
+<td>เริ่ม Simple Review Queue ก่อน Collaborative Workflow</td>
+</tr>
+</tbody>
+</table></div>
+<p>Open Question ไม่ใช่สิทธิ์ให้สร้าง Behavior เอง ต้องแทน Working Default ด้วย Explicit Decision เมื่อ Implementation มาถึงขอบเขตนั้น</p>
+<hr />
+<h2 id="28-definition-of-done">28. Definition of Done<a class="headerlink" href="#28-definition-of-done" title="Permanent link">#</a></h2>
+<p>ฟีเจอร์ถือว่าเสร็จเมื่อ:</p>
+<ul>
+<li class="task"><input type="checkbox" disabled> Requirement และ Acceptance Criteria เป็นปัจจุบัน</li>
+<li class="task"><input type="checkbox" disabled> Owning Service ชัดเจน</li>
+<li class="task"><input type="checkbox" disabled> Public API และ Event Contract ถูกอัปเดต</li>
+<li class="task"><input type="checkbox" disabled> Database Migration รองรับ Backward Compatibility หรือมี Rollout Plan</li>
+<li class="task"><input type="checkbox" disabled> Business Rule มี Meaningful Test</li>
+<li class="task"><input type="checkbox" disabled> Adapter มี Integration Test ที่จำเป็น</li>
+<li class="task"><input type="checkbox" disabled> มี Log, Metric, Trace และ Audit</li>
+<li class="task"><input type="checkbox" disabled> กำหนด Idempotency และ Retry Behavior</li>
+<li class="task"><input type="checkbox" disabled> ตรวจ Security และ Data Ownership</li>
+<li class="task"><input type="checkbox" disabled> Evidence Link ที่ผู้ใช้เห็นเปิดใช้งานได้</li>
+<li class="task"><input type="checkbox" disabled> Documentation และ ADR ถูกอัปเดต</li>
+<li class="task"><input type="checkbox" disabled> ทดสอบผ่าน Vertical Slice ที่ตั้งใจใช้งาน</li>
+</ul>
+<hr />
+<h2 id="29-งานแรกทแนะนำ">29. งานแรกที่แนะนำ<a class="headerlink" href="#29-งานแรกทแนะนำ" title="Permanent link">#</a></h2>
+<p>เริ่ม Thin Vertical Slice สำหรับหนึ่งหลักทรัพย์และหนึ่ง Official Source:</p>
+<pre class="code"><code class="language-text">Company master record
+  → scheduled source discovery
+  → raw document storage
+  → exact document citation
+  → one candidate financial fact
+  → review and verification
+  → one deterministic metric
+  → dashboard display
+</code></pre>
+
+<p>ไม่ควรเริ่มจากทุก Source, ทุก Financial Statement Item, General Autonomous Agent, Kubernetes หรือ Complete Valuation Suite ให้คง Target Service Contract ไว้ แล้วพัฒนาหนึ่งเส้นทางที่ Verify ได้ตั้งแต่ต้นจนจบ</p>
+<hr />
+<h2 id="30-prompt-สำหรบกบรบทใน-session-ใหม">30. Prompt สำหรับกู้บริบทใน Session ใหม่<a class="headerlink" href="#30-prompt-สำหรบกบรบทใน-session-ใหม" title="Permanent link">#</a></h2>
+<pre class="code"><code class="language-text">อ่าน stock-intelligence-spec-driven-development-th.md ให้ครบก่อนเริ่มทำงาน
+ถือว่าไฟล์นี้เป็น Source of Truth ของ Product Scope, Microservice Boundary,
+Data Ownership, Contract, Accuracy Rule และ Delivery Sequence
+
+ก่อนลงมือให้รายงาน:
+1. Requirement ที่กำลังทำ
+2. Owning Service
+3. API/Event/Data Contract ที่ได้รับผลกระทบ
+4. Vertical Slice ที่เล็กที่สุดและ Verify ได้
+5. การตัดสินใจที่ยังเปิดและ Block Implementation จริง
+
+จากนั้นจึง Implement หรือแก้งาน โดยรักษา Deterministic Financial Calculation,
+Evidence Lineage, การแยก FACT/INFERENCE/HYPOTHESIS,
+Idempotent Event Processing และ Pragmatic Ports &amp; Adapters ใน Go
+ห้ามสร้าง Source Behavior หรือ Financial Semantic ขึ้นเอง
+</code></pre>
+
+<hr />
+<h2 id="31-glossary">31. Glossary<a class="headerlink" href="#31-glossary" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>คำ</th>
+<th>ความหมายในโครงการ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bounded Context</td>
+<td>ขอบเขต Domain ที่มีภาษา Model และ Ownership ของตัวเอง</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>Interface ที่ Application Core ต้องการหรือเปิดให้เรียก</td>
+</tr>
+<tr>
+<td>Adapter</td>
+<td>Implementation เฉพาะ Technology ที่เชื่อม Port กับระบบภายนอก</td>
+</tr>
+<tr>
+<td>Driving Adapter</td>
+<td>HTTP, gRPC, Kafka Consumer, CLI หรือ Scheduler ที่เรียก Application</td>
+</tr>
+<tr>
+<td>Driven Adapter</td>
+<td>Database, Broker Producer, External API, Storage หรือ LLM ที่ Application ใช้</td>
+</tr>
+<tr>
+<td>Outbox</td>
+<td>Record Event ใน Local Transaction เดียวกับ Domain Change เพื่อ Publish ภายหลังอย่างเชื่อถือได้</td>
+</tr>
+<tr>
+<td>Inbox</td>
+<td>Consumer-side Record สำหรับป้องกัน Process Event ซ้ำ</td>
+</tr>
+<tr>
+<td>Evidence Lineage</td>
+<td>เส้นทางจาก Claim หรือตัวเลขกลับไปหา Source Content และ Processing History</td>
+</tr>
+<tr>
+<td>Thesis</td>
+<td>มุมมองการลงทุนแบบมีโครงสร้าง ประกอบด้วย Driver, Assumption, Risk, Catalyst และ Invalidation Trigger</td>
+</tr>
+<tr>
+<td>Materiality</td>
+<td>ระดับที่ข้อมูลอาจกระทบ Thesis, Risk Assessment หรือ Valuation</td>
+</tr>
+<tr>
+<td>Restatement</td>
+<td>Version ใหม่ที่เป็นทางการของ Financial Value ที่เคยรายงาน</td>
+</tr>
+<tr>
+<td>Formula Version</td>
+<td>Identifier ของ Logic ที่ใช้คำนวณ Metric</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="32-revision-log">32. Revision Log<a class="headerlink" href="#32-revision-log" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>วันที่</th>
+<th>การเปลี่ยนแปลง</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1.0-th</td>
+<td>2026-09-30</td>
+<td>ฉบับภาษาไทยครั้งแรก ครอบคลุม Product Intent, Microservice Architecture, Go Repository, Ports &amp; Adapters, Data Contract, Accuracy Rule, SDD Workflow และ Delivery Roadmap</td>
+</tr>
+</tbody>
+</table></div>
+</main>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "strict" });
+</script>
+</body>
+</html>
